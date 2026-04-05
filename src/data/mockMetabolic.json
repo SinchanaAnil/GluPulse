@@ -1,0 +1,72 @@
+{
+    "project": "GluPulse",
+    "system_branding": "GluPulse Metabolic Intelligence",
+    "p4_data_version": "3.0_Final_Abundant",
+    "scenarios": {
+      "scenario_a_morning_crash": {
+        "description": "GluPulse Predictive alert for pre-breakfast hypoglycemia",
+        "glucose_telemetry": [
+          { "t": "06:00", "v": 98, "trend": "stable" },
+          { "t": "07:00", "v": 85, "trend": "falling" },
+          { "t": "07:30", "v": 68, "trend": "falling_rapidly" }
+        ],
+        "risk_engine": {
+          "score": 8.2,
+          "prediction": "52 mg/dL @ 08:15",
+          "xai_reason": "High basal insulin + 0g GluPulse carb buffer + poor sleep (5h)"
+        }
+      },
+      "scenario_b_post_meal_spike": {
+        "description": "Vision-to-Simulation engine response to High-GI meal",
+        "vision_input": {
+          "item": "Pepperoni Pizza",
+          "estimated_carbs": 85,
+          "gi_index": "High",
+          "confidence": 0.92
+        },
+        "simulation_output": {
+          "projected_peak": 210,
+          "recommended_bolus": 6.5,
+          "bolus_timing": "Immediate_GluPulse_Action"
+        }
+      },
+      "scenario_c_sos_trigger": {
+        "description": "GluPulse Dead-Man's Switch activation logic",
+        "neuro_reflex": {
+          "test_status": "FAIL",
+          "reaction_time_ms": 1250,
+          "threshold_ms": 600
+        },
+        "activity_sensor": {
+          "steps_last_30m": 0,
+          "posture": "horizontal"
+        },
+        "sos_payload": {
+          "trigger": "Reflex_Fail + Zero_Movement",
+          "countdown_start": 30,
+          "proxy_contact": "Sinchana Anil (Primary Guardian)",
+          "gps_mock": "12.9716° N, 77.5946° E"
+        }
+      }
+    },
+    "global_metrics_for_charts": {
+      "vocal_biomarkers": {
+        "jitter": 14.2,
+        "shimmer": 0.9,
+        "pitch_instability": "High",
+        "hero_score": 88
+      },
+      "sleep_tracker": {
+        "total_hours": 5.5,
+        "quality_score": 62,
+        "risk_multiplier": 1.5,
+        "notes": "GluPulse detected < 6h sleep; metabolic sensitivity increased"
+      },
+      "explainable_timeline": [
+        { "time": "12:00", "glucose": 115, "iob": 3.8, "steps": 1200, "label": "Lunch Skipped" },
+        { "time": "14:00", "glucose": 95, "iob": 3.2, "steps": 5400, "label": "3km Walk Start" },
+        { "time": "15:30", "glucose": 72, "iob": 2.8, "steps": 9200, "label": "Rapid Depletion" },
+        { "time": "16:00", "glucose": 58, "iob": 2.4, "steps": 10500, "label": "GluPulse CRITICAL: High IOB + Steps" }
+      ]
+    }
+  }
