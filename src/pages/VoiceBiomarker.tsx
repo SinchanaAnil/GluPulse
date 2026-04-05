@@ -21,7 +21,15 @@ export default function VoiceBiomarker() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Determine best supported mimeType
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+        ? 'audio/webm;codecs=opus' 
+        : MediaRecorder.isTypeSupported('audio/webm') 
+          ? 'audio/webm' 
+          : 'audio/ogg';
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -60,7 +68,8 @@ export default function VoiceBiomarker() {
 
     try {
       console.log("[FRONTEND] Uploading audio to API...");
-      const response = await fetch('http://localhost:5000/api/vocal-risk', {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${baseUrl}/api/vocal-risk`, {
         method: 'POST',
         body: formData,
       });

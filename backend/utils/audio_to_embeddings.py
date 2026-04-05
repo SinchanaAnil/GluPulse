@@ -10,17 +10,17 @@ try:
     BYOLS_AVAILABLE = True
 except ImportError:
     BYOLS_AVAILABLE = False
-    print("⚠️  byol-s not installed. Using fallback.")
+    print("⚠️  byol-s not installed. Using fallback.", file=sys.stderr)
 
 class AudioEmbedder:
     def __init__(self):
         if BYOLS_AVAILABLE:
-            print("Loading Byol-S model...")
+            print("Loading Byol-S model...", file=sys.stderr)
             self.model = BYOLS.from_pretrained('byol-s-16x96d')
             self.model.eval()
             self.use_byols = True
         else:
-            print("Using librosa fallback...")
+            print("Using librosa fallback...", file=sys.stderr)
             self.use_byols = False
     
     def embed_from_file(self, audio_path, sample_rate=16000):
@@ -48,9 +48,16 @@ class AudioEmbedder:
         
         # Embed
         with torch.no_grad():
-            embedding = self.model(waveform)  # (1, 512)
+            embedding = self.model(waveform)  # (1, 512 or other)
         
-        return embedding.squeeze().numpy()  # (512,)
+        # Ensure it matches 2048 for the diabetes classifier
+        emb_np = embedding.squeeze().numpy()
+        if len(emb_np) < 2048:
+            emb_np = np.concatenate([emb_np, np.zeros(2048 - len(emb_np))])
+        else:
+            emb_np = emb_np[:2048]
+            
+        return emb_np
     
     def _embed_fallback(self, audio_path, sample_rate):
         """Librosa-based fallback (simpler but less accurate)"""
@@ -86,11 +93,11 @@ class AudioEmbedder:
         # Concatenate: 13*2 + 12*2 + 2*4 = 26 + 24 + 8 = 58 features
         embedding = np.concatenate(features)
         
-        # Pad to 512 dimensions (to match training)
-        if len(embedding) < 512:
-            embedding = np.concatenate([embedding, np.zeros(512 - len(embedding))])
+        # Pad to 2048 dimensions (to match training expectation)
+        if len(embedding) < 2048:
+            embedding = np.concatenate([embedding, np.zeros(2048 - len(embedding))])
         else:
-            embedding = embedding[:512]
+            embedding = embedding[:2048]
         
         return embedding
 

@@ -25,6 +25,14 @@ def predict_risk(embedding, clf, scaler):
     # Convert to numpy if needed
     embedding = np.array(embedding).reshape(1, -1)
     
+    # Defensive check for dimension mismatch
+    expected_features = scaler.n_features_in_
+    actual_features = embedding.shape[1]
+    
+    if actual_features != expected_features:
+        raise ValueError(f"Feature mismatch: X has {actual_features} features, but StandardScaler is expecting {expected_features}. " 
+                         "Check audio_to_embeddings.py to ensure it is producing the correct embedding size.")
+
     # Scale
     embedding_scaled = scaler.transform(embedding)
     

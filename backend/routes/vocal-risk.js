@@ -5,6 +5,9 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import ffmpeg from 'fluent-ffmpeg';
+import { promisify } from 'util';
+import { Readable } from 'stream';
 
 // ESM fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -13,8 +16,8 @@ const __dirname = dirname(__filename);
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Configuration for Python command (Windows usually uses 'python')
-const PYTHON_CMD = process.platform === 'win32' ? 'python' : 'python3';
+// Configuration for Python command from venv
+const PYTHON_CMD = path.join(process.cwd(), 'venv', 'bin', 'python3');
 
 router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
     // Using process.cwd() to ensure the temp path works across OS environments
@@ -27,8 +30,21 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
         
         console.log(`[VOCAL_RISK] Received audio: ${req.file.size} bytes`);
         
-        // Save audio temporarily
-        fs.writeFileSync(tempAudioPath, req.file.buffer);
+        // Convert to standard WAV (16kHz, mono) using ffmpeg
+        console.log('[VOCAL_RISK] Converting audio to standard WAV...');
+        await new Promise((resolve, reject) => {
+            const inputStream = new Readable();
+            inputStream.push(req.file.buffer);
+            inputStream.push(null);
+
+            ffmpeg(inputStream)
+                .toFormat('wav')
+                .audioChannels(1)
+                .audioFrequency(16000)
+                .on('error', (err) => reject(new Error('FFmpeg conversion failed: ' + err.message)))
+                .on('end', () => resolve(true))
+                .save(tempAudioPath);
+        });
         
         // Step 1: Extract embedding
         console.log('[VOCAL_RISK] Extracting embedding...');
