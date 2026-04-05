@@ -11,11 +11,16 @@ def load_and_prepare_data():
     
     print("Loading VOCADIAB datasets...")
     
+    import os
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    male_path = os.path.join(base_dir, 'models', 'vocadiab_males_dataset.pkl')
+    female_path = os.path.join(base_dir, 'models', 'vocadiab_females_dataset.pkl')
+    
     # Load pickle files (pandas will be available)
-    with open('./models/vocadiab_males_dataset.pkl', 'rb') as f:
+    with open(male_path, 'rb') as f:
         male_df = pickle.load(f)
     
-    with open('./models/vocadiab_females_dataset.pkl', 'rb') as f:
+    with open(female_path, 'rb') as f:
         female_df = pickle.load(f)
     
     # These are likely pandas DataFrames with columns:

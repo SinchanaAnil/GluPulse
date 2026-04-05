@@ -23,14 +23,14 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
         // Step 1: Extract embedding
         console.log('[VOCAL_RISK] Extracting embedding...');
         const embedding = await runPythonScript(
-            'backend/utils/audio_to_embeddings.py',
+            path.join(__dirname, '../utils/audio_to_embeddings.py'),
             [tempAudioPath]
         );
         
         // Step 2: Classify
         console.log('[VOCAL_RISK] Running inference...');
         const result = await runPythonScript(
-            'backend/utils/inference.py',
+            path.join(__dirname, '../utils/inference.py'),
             [JSON.stringify(embedding)]
         );
         

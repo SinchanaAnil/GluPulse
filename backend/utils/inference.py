@@ -6,12 +6,17 @@ import joblib
 def load_model():
     """Load pre-trained classifier and scaler"""
     
+    import os
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    clf_path = os.path.join(base_dir, 'models', 'vocadiab_classifier.pkl')
+    scaler_path = os.path.join(base_dir, 'models', 'vocadiab_scaler.pkl')
+    
     try:
-        clf = joblib.load('./models/vocadiab_classifier.pkl')
-        scaler = joblib.load('./models/vocadiab_scaler.pkl')
+        clf = joblib.load(clf_path)
+        scaler = joblib.load(scaler_path)
         return clf, scaler
     except FileNotFoundError as e:
-        print(f"ERROR: Model files not found. Train first: python utils/load_vocadiab.py", file=sys.stderr)
+        print(f"ERROR: Model files not found at {clf_path}. Train first: python utils/load_vocadiab.py", file=sys.stderr)
         sys.exit(1)
 
 def predict_risk(embedding, clf, scaler):
