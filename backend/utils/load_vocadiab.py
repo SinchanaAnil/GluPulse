@@ -1,6 +1,27 @@
+import os
+import sys
+import types
+import pandas as pd
+
+# High-robustness unpickling shim
+try:
+    import pandas.core.indexes.base as _base
+    if not hasattr(_base, 'NumericIndex'):
+        _base.NumericIndex = pd.Index
+    
+    # Map the old module path to the current base module
+    sys.modules['pandas.core.indexes.numeric'] = _base
+    
+    # Also map specifically to the class name in many possible locations
+    setattr(pd, 'NumericIndex', pd.Index)
+    import pandas.core.indexes as _indexes
+    setattr(_indexes, 'NumericIndex', pd.Index)
+    
+except Exception as e:
+    print(f"Warning during pandas shim: {e}")
+
 import pickle
 import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -17,11 +38,8 @@ def load_and_prepare_data():
     female_path = os.path.join(base_dir, 'models', 'vocadiab_females_dataset.pkl')
     
     # Load pickle files (pandas will be available)
-    with open(male_path, 'rb') as f:
-        male_df = pickle.load(f)
-    
-    with open(female_path, 'rb') as f:
-        female_df = pickle.load(f)
+    male_df = pd.read_pickle(male_path)
+    female_df = pd.read_pickle(female_path)
     
     # These are likely pandas DataFrames with columns:
     # - embeddings (or features): 512-dimensional Byol-S vectors
@@ -34,22 +52,19 @@ def load_and_prepare_data():
     print(f"Female data shape: {female_df.shape}")
     print(f"Male columns: {male_df.columns.tolist()}")
     
-    # Determine embedding column name (might be 'embeddings', 'features', etc)
-    embedding_col = None
-    for col in ['embeddings', 'features', 'embedding', 'feature']:
-        if col in male_df.columns:
-            embedding_col = col
-            break
+    # Normalize all columns to lowercase
+    male_df.columns = [str(c).lower().strip() for c in male_df.columns]
+    female_df.columns = [str(c).lower().strip() for c in female_df.columns]
     
-    # Determine target column name
-    target_col = None
-    for col in ['ada_score', 'diabetes', 'label', 'y', 'target', 'diabetes_risk']:
-        if col in male_df.columns:
-            target_col = col
-            break
+    cols = list(male_df.columns)
+    print(f"DEBUG: Male columns (normalized): {cols}")
+    
+    # Very broad search
+    embedding_col = next((c for c in cols if 'embed' in c or 'feature' in c or c == 'x'), None)
+    target_col = next((c for c in cols if 'ada' in c or 'diabet' in c or 'score' in c or c in ['y', 'label', 'target']), None)
     
     if not embedding_col or not target_col:
-        raise ValueError(f"Could not find embedding or target column. Available: {male_df.columns.tolist()}")
+        raise ValueError(f"Could not find embedding/target. Found in cols: {male_df.columns.tolist()}.\nEmbedding Search found: {embedding_col}.\nTarget Search found: {target_col}")
     
     print(f"Using embedding column: '{embedding_col}'")
     print(f"Using target column: '{target_col}'")
