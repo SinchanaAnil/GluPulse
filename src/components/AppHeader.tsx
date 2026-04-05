@@ -1,6 +1,7 @@
 import { Search, Bell, User, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
+import { SignOutControl } from "@/components/SignOutControl";
 
 export function AppHeader() {
   const { theme, toggle } = useTheme();
@@ -38,6 +39,7 @@ export function AppHeader() {
           <Bell className="h-4 w-4" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-secondary animate-pulse" />
         </button>
+        <SignOutControl variant="header" />
         <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary transition-colors hover:bg-primary/30 btn-press">
           <User className="h-4 w-4" />
         </button>
