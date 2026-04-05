@@ -5,7 +5,7 @@ import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tool
 
 const fadeUp = {
   initial: { opacity: 0, y: 20, scale: 0.96 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const } },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" } },
 };
 
 const simData = [
