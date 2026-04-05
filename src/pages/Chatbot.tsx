@@ -1,209 +1,199 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, Send } from "lucide-react";
+import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
-const CHAT_API_URL = "http://localhost:3001/api/chat";
-const RISK_SCORE = 72;
-
-export type ChatMessage = { role: "user" | "assistant"; content: string };
-
-type ChatApiResponse = {
-  reply?: string;
-  error?: string;
-};
-
-const QUICK_REPLIES = ["I feel shaky 😰", "I just ate 🍛", "Check my risk 📊"];
-
-function stripLeadingAssistantMessages(messages: ChatMessage[]): ChatMessage[] {
-  const next = [...messages];
-  while (next.length > 0 && next[0].role === "assistant") {
-    next.shift();
-  }
-  return next;
+export interface ChatbotProps {
+  riskScore?: number;
 }
 
-function isCriticalAlert(content: string): boolean {
-  return content.includes("CRITICAL ALERT");
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
 }
 
-async function postChat(messages: ChatMessage[]): Promise<string> {
-  const payloadMessages = stripLeadingAssistantMessages(messages).map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
-
-  const res = await fetch(CHAT_API_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      messages: payloadMessages,
-      riskScore: RISK_SCORE,
-    }),
-  });
-
-  let data: ChatApiResponse = {};
-  try {
-    data = (await res.json()) as ChatApiResponse;
-  } catch {
-    data = {};
-  }
-
-  if (!res.ok) {
-    throw new Error(data.error?.trim() || `Request failed (${res.status})`);
-  }
-
-  const reply = typeof data.reply === "string" ? data.reply.trim() : "";
-  if (!reply) {
-    throw new Error("Empty response from server.");
-  }
-  return reply;
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex justify-start">
-      <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
-        <span className="typing-dot" />
-        <span className="typing-dot" />
-        <span className="typing-dot" />
-      </div>
-    </div>
-  );
-}
-
-export default function ChatbotPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+export default function Chatbot({ riskScore = 72 }: ChatbotProps) {
+  const [messages, setMessages] = useState<Message[]>([
     {
+      id: "initial",
       role: "assistant",
-      content: "Hi! I'm GluPulse Co-Pilot. How can I help you today?",
+      content: `Hi! I'm your GluPulse Co-Pilot. Your current risk score is ${riskScore}/100. How are you feeling right now?`,
+      timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
-  const [awaiting, setAwaiting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingHistory, setPendingHistory] = useState<ChatMessage[] | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, awaiting, error]);
+  }, [messages, isLoading, error]);
 
-  async function fetchReply(historyAfterUser: ChatMessage[]) {
-    setAwaiting(true);
+  const submitMessage = async (newMessages: Message[]) => {
+    setIsLoading(true);
     setError(null);
-    setPendingHistory(null);
+
+    const conversationHistory = newMessages.slice(1).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     try {
-      const reply = await postChat(historyAfterUser);
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      const response = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: conversationHistory, riskScore }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const assistantMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.reply,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        setError("Failed to reach GluPulse server. Is the backend running?");
+      }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Something went wrong.";
-      setError(msg);
-      setPendingHistory(historyAfterUser);
+      setError("Failed to reach GluPulse server. Is the backend running?");
     } finally {
-      setAwaiting(false);
+      setIsLoading(false);
     }
-  }
+  };
 
-  function send(text: string) {
+  const handleSend = (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || awaiting) return;
+    if (!trimmed || isLoading) return;
 
-    const userMessage: ChatMessage = { role: "user", content: trimmed };
-    const next = [...messages, userMessage];
-    setMessages(next);
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: trimmed,
+      timestamp: new Date(),
+    };
+
     setInput("");
-    void fetchReply(next);
-  }
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    submitMessage(nextMessages);
+  };
 
-  function retry() {
-    if (!pendingHistory || awaiting) return;
-    void fetchReply(pendingHistory);
-  }
+  const handleRetry = () => {
+    submitMessage(messages);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(input);
+    }
+  };
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col gap-3 px-1">
-      <div className="shrink-0 border-b border-border pb-3">
-        <h1 className="text-lg font-semibold text-foreground">GluPulse Co-Pilot</h1>
-        <p className="text-sm text-muted-foreground">Chat with your metabolic assistant</p>
-      </div>
-
-      <ScrollArea className="h-[min(100%,calc(100vh-16rem))] min-h-[200px] w-full rounded-lg border border-border">
+    <Card className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col gap-3 p-4">
+      <ScrollArea className="flex-grow rounded-lg border border-border bg-background">
         <div className="space-y-4 p-4">
-          {messages.map((m, i) => {
-            const critical = m.role === "assistant" && isCriticalAlert(m.content);
-            return (
-              <div
-                key={`${m.role}-${i}`}
-                className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
-              >
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed text-foreground",
-                    m.role === "user" && "bg-blue-100 dark:bg-blue-950/50",
-                    m.role === "assistant" && !critical && "bg-gray-100 dark:bg-gray-800/80",
-                    m.role === "assistant" &&
-                      critical &&
-                      "border-2 border-red-500 bg-gray-100 dark:bg-gray-800/80",
-                  )}
-                >
-                  {critical && (
-                    <div className="mb-2 flex items-center gap-2 text-red-600 dark:text-red-400">
-                      <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-                      <span className="text-xs font-semibold uppercase tracking-wide">Critical</span>
-                    </div>
-                  )}
-                  <p className="whitespace-pre-wrap">{m.content}</p>
-                </div>
-              </div>
-            );
-          })}
-          {awaiting && <TypingIndicator />}
-          <div ref={bottomRef} />
+          {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`flex ${
+              m.role === "user" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                m.role === "user"
+                  ? "bg-teal-600 text-white dark:bg-teal-700"
+                  : "bg-gray-100 dark:bg-gray-800 text-foreground"
+              }`}
+            >
+              {m.content}
+            </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
+              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></span>
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
         </div>
       </ScrollArea>
 
-      {error && (
-        <div className="flex shrink-0 flex-col gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <p>{error}</p>
-          <div>
-            <Button type="button" variant="outline" size="sm" onClick={retry} disabled={awaiting}>
-              Retry
-            </Button>
+      <div className="shrink-0 flex flex-col gap-3">
+        {error && (
+          <div className="flex shrink-0 flex-col gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p>{error}</p>
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                disabled={isLoading}
+              >
+                Retry
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex shrink-0 gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send(input);
-            }
-          }}
-          placeholder="Type a message…"
-          disabled={awaiting}
-          className="flex-1"
-          autoComplete="off"
-        />
-        <Button type="button" size="icon" onClick={() => send(input)} disabled={awaiting || !input.trim()} aria-label="Send">
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
+        {messages.length === 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {["I feel shaky \ud83d\udea8", "I just ate \ud83c\udf7d\ufe0f", "Check my risk \ud83d\udcca"].map((reply) => (
+              <Button
+                key={reply}
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setInput(reply);
+                  handleSend(reply);
+                }}
+                disabled={isLoading}
+                className="whitespace-nowrap rounded-full"
+              >
+                {reply}
+              </Button>
+            ))}
+          </div>
+        )}
 
-      <div className="flex shrink-0 flex-wrap gap-2">
-        {QUICK_REPLIES.map((label) => (
-          <Button key={label} type="button" variant="outline" size="sm" className="text-xs" onClick={() => send(label)} disabled={awaiting}>
-            {label}
+        <div className="flex gap-2 mb-2 items-end">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            disabled={isLoading}
+            className="min-h-[44px] max-h-32 resize-none flex-1"
+            rows={1}
+          />
+          <Button
+            type="button"
+            size="icon"
+            onClick={() => handleSend(input)}
+            disabled={!input.trim() || isLoading}
+            aria-label="Send"
+            className="shrink-0 h-11 w-11"
+          >
+            <Send className="h-5 w-5" />
           </Button>
-        ))}
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }
