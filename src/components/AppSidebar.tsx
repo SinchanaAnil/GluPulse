@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { SignOutControl } from "@/components/SignOutControl";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -57,6 +58,10 @@ export function AppSidebar() {
           );
         })}
       </nav>
+
+      <div className="flex flex-col items-center border-t border-border pt-2">
+        <SignOutControl variant="sidebar" />
+      </div>
     </aside>
   );
 }
