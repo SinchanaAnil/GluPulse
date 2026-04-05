@@ -1,0 +1,12 @@
+numpy
+scipy
+librosa
+opencv-python
+mediapipe
+scikit-learn
+pandas
+joblib
+torch
+torchaudio
+byols-hybrid
+soundfile
