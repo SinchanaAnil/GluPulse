@@ -104,33 +104,31 @@ export default function Chatbot({ riskScore = 72 }: ChatbotProps) {
       <ScrollArea className="flex-grow rounded-lg border border-border bg-background">
         <div className="space-y-4 p-4">
           {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex ${
-              m.role === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
-                m.role === "user"
-                  ? "bg-teal-600 text-white dark:bg-teal-700"
-                  : "bg-gray-100 dark:bg-gray-800 text-foreground"
-              }`}
+              key={m.id}
+              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"
+                }`}
             >
-              {m.content}
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${m.role === "user"
+                    ? "bg-teal-600 text-white dark:bg-teal-700"
+                    : "bg-gray-100 dark:bg-gray-800 text-foreground"
+                  }`}
+              >
+                {m.content}
+              </div>
             </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
-              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></span>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
+                <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></span>
+              </div>
             </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
+          )}
+          <div ref={bottomRef} />
         </div>
       </ScrollArea>
 
