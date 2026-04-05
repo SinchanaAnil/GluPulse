@@ -5,7 +5,7 @@ import { Mic, MicOff, BarChart3, AudioWaveform } from "lucide-react";
 const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 const fadeUp = {
   initial: { opacity: 0, y: 20, scale: 0.96 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const } },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" } },
 };
 
 export default function VoiceBiomarker() {
