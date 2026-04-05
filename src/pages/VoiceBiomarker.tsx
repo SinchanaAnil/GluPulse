@@ -6,7 +6,7 @@ import { toast } from "sonner";
 const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 const fadeUp = {
   initial: { opacity: 0, y: 20, scale: 0.96 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" } },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" as const } },
 };
 
 export default function VoiceBiomarker() {
