@@ -32,7 +32,7 @@ const quickActions = [
 const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 const fadeUp = {
   initial: { opacity: 0, y: 20, scale: 0.96 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" } },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" as const } },
 };
 
 function MetricCard({ m, index }: { m: typeof metrics[0]; index: number }) {
@@ -86,70 +86,103 @@ export default function Dashboard() {
 
   return (
     <motion.div className="space-y-6" variants={stagger} initial="initial" animate="animate">
-      {/* Risk Overview */}
-      <motion.div variants={fadeUp} className="glass-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Hypoglycemia Risk Score</p>
-            <div className="flex items-baseline gap-3">
-              <span className={`text-5xl font-semibold ${riskColor} glow-text-primary tabular-nums`}>
-                {useCountUp(riskScore, 1500, 200)}
-              </span>
-              <span className="text-lg text-muted-foreground">/ 100</span>
-            </div>
-            <motion.div
-              className="mt-2 flex items-center gap-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            >
-              <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${riskScore < 30 ? "bg-success/15 text-success" : riskScore < 60 ? "bg-warning/15 text-warning" : "bg-secondary/15 text-secondary"}`}>
-                <AlertTriangle className="h-3 w-3" />
-                {riskLevel} Risk
-              </span>
-              <span className="text-sm text-muted-foreground">All vitals within normal range. No alerts.</span>
-            </motion.div>
+      {/* Two-column: Spline 3D + Dashboard */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left: 3D Spline Model */}
+        <motion.div
+          variants={fadeUp}
+          className="lg:w-[42%] w-full min-h-[70vh] rounded-[var(--radius)] overflow-hidden relative flex items-center justify-center"
+          style={{
+            background: "radial-gradient(ellipse at 30% 50%, hsla(var(--secondary) / 0.15), hsla(var(--primary) / 0.08) 60%, transparent 100%)",
+            border: "1px solid hsl(var(--glass-border))",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          {/* Ambient glow overlays */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-48 h-48 rounded-full bg-primary/10 blur-[80px] animate-pulse-glow" />
+            <div className="absolute bottom-1/4 right-1/4 w-36 h-36 rounded-full bg-secondary/10 blur-[60px] animate-pulse-glow" style={{ animationDelay: "1s" }} />
           </div>
-          <RiskGauge score={riskScore} />
-        </div>
-      </motion.div>
+          {/* Shadow under model */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-black/20 blur-2xl rounded-full" />
+          <iframe
+            src="https://my.spline.design/untitled-0urFPT7tnjM8oMOKP60RTphA/"
+            className="w-full h-full absolute inset-0"
+            style={{ border: "none", background: "transparent" }}
+            loading="lazy"
+            title="GluPulse 3D Model"
+            allow="autoplay"
+          />
+        </motion.div>
 
-      {/* Metrics Row */}
-      <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-4" variants={stagger}>
-        {metrics.map((m, i) => (
-          <MetricCard key={m.title} m={m} index={i} />
-        ))}
-      </motion.div>
+        {/* Right: Data Dashboard */}
+        <div className="lg:w-[58%] w-full space-y-6">
+          {/* Risk Overview */}
+          <motion.div variants={fadeUp} className="glass-card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Hypoglycemia Risk Score</p>
+                <div className="flex items-baseline gap-3">
+                  <span className={`text-5xl font-semibold ${riskColor} glow-text-primary tabular-nums`}>
+                    {useCountUp(riskScore, 1500, 200)}
+                  </span>
+                  <span className="text-lg text-muted-foreground">/ 100</span>
+                </div>
+                <motion.div
+                  className="mt-2 flex items-center gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${riskScore < 30 ? "bg-success/15 text-success" : riskScore < 60 ? "bg-warning/15 text-warning" : "bg-secondary/15 text-secondary"}`}>
+                    <AlertTriangle className="h-3 w-3" />
+                    {riskLevel} Risk
+                  </span>
+                  <span className="text-sm text-muted-foreground">All vitals within normal range.</span>
+                </motion.div>
+              </div>
+              <RiskGauge score={riskScore} />
+            </div>
+          </motion.div>
 
-      {/* Activity Chart */}
-      <motion.div variants={fadeUp} className="glass-card p-6">
-        <h3 className="text-sm font-medium text-muted-foreground mb-4">Activity & Glucose Trends</h3>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="glucoseGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(187, 100%, 50%)" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="hsl(187, 100%, 50%)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="riskGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(0, 100%, 65%)" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="hsl(0, 100%, 65%)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 30%, 20%)" />
-              <XAxis dataKey="time" stroke="hsl(215, 20%, 45%)" fontSize={12} />
-              <YAxis stroke="hsl(215, 20%, 45%)" fontSize={12} />
-              <Tooltip
-                contentStyle={{ backgroundColor: "hsl(220, 40%, 14%)", border: "1px solid hsl(220, 30%, 22%)", borderRadius: "12px", color: "hsl(210, 30%, 92%)" }}
-                cursor={{ stroke: "hsl(187, 100%, 50%)", strokeWidth: 1, strokeDasharray: "4 4" }}
-              />
-              <Area type="monotone" dataKey="glucose" stroke="hsl(187, 100%, 50%)" fill="url(#glucoseGrad)" strokeWidth={2} animationDuration={2000} animationEasing="ease-out" />
-              <Area type="monotone" dataKey="risk" stroke="hsl(0, 100%, 65%)" fill="url(#riskGrad)" strokeWidth={2} animationDuration={2000} animationEasing="ease-out" animationBegin={400} />
-            </AreaChart>
-          </ResponsiveContainer>
+          {/* Metrics Row */}
+          <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-4" variants={stagger}>
+            {metrics.map((m, i) => (
+              <MetricCard key={m.title} m={m} index={i} />
+            ))}
+          </motion.div>
+
+          {/* Activity Chart */}
+          <motion.div variants={fadeUp} className="glass-card p-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">Activity & Glucose Trends</h3>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="glucoseGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(187, 100%, 50%)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(187, 100%, 50%)" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="riskGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(0, 100%, 65%)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(0, 100%, 65%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 30%, 20%)" />
+                  <XAxis dataKey="time" stroke="hsl(215, 20%, 45%)" fontSize={12} />
+                  <YAxis stroke="hsl(215, 20%, 45%)" fontSize={12} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "hsl(220, 40%, 14%)", border: "1px solid hsl(220, 30%, 22%)", borderRadius: "12px", color: "hsl(210, 30%, 92%)" }}
+                    cursor={{ stroke: "hsl(187, 100%, 50%)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  />
+                  <Area type="monotone" dataKey="glucose" stroke="hsl(187, 100%, 50%)" fill="url(#glucoseGrad)" strokeWidth={2} animationDuration={2000} animationEasing="ease-out" />
+                  <Area type="monotone" dataKey="risk" stroke="hsl(0, 100%, 65%)" fill="url(#riskGrad)" strokeWidth={2} animationDuration={2000} animationEasing="ease-out" animationBegin={400} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Quick Actions */}
       <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4" variants={stagger}>
