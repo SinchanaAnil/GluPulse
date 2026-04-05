@@ -1,14 +1,24 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const { spawn } = require('child_process');
-const fs = require('fs');
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ESM fix for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Configuration for Python command (Windows usually uses 'python')
+const PYTHON_CMD = process.platform === 'win32' ? 'python' : 'python3';
+
 router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
-    const tempAudioPath = path.join('/tmp', `audio_${Date.now()}.wav`);
+    // Using process.cwd() to ensure the temp path works across OS environments
+    const tempAudioPath = path.join(process.cwd(), `audio_${Date.now()}.wav`);
     
     try {
         if (!req.file) {
@@ -35,19 +45,20 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
         );
         
         // Step 3: Format response
-        const riskScore = result.risk_score;
+        const riskScore = result.risk_score || 0;
+        const confidence = result.confidence || 0;
         const xaiLabel = riskScore > 0.7 ? '🔴 HIGH RISK' : 
                          riskScore > 0.5 ? '🟡 MODERATE RISK' : 
                          '🟢 LOW RISK';
         
         res.json({
             riskScore: parseFloat(riskScore.toFixed(3)),
-            confidence: parseFloat(result.confidence.toFixed(3)),
+            confidence: parseFloat(confidence.toFixed(3)),
             xaiLabel: xaiLabel,
             features: {
                 model: 'vocadiab-byol-s',
-                embedding_dim: embedding.length,
-                top_feature_indices: result.top_feature_indices,
+                embedding_dim: embedding?.length || 0,
+                top_feature_indices: result.top_feature_indices || [],
                 dataset: 'colive-voice-study',
                 reference: 'https://doi.org/10.1038/s41598-023-xxxxx'
             },
@@ -58,19 +69,24 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
         console.error('[VOCAL_RISK_ERROR]', error.message);
         res.status(500).json({ 
             error: 'Inference failed: ' + error.message,
-            fallback: { riskScore: 0.5, xaiLabel: '⚠️  System error' }
+            fallback: { riskScore: 0.5, xaiLabel: '⚠️ System error' }
         });
     } finally {
-        // Cleanup
+        // Cleanup temp file
         if (fs.existsSync(tempAudioPath)) {
-            fs.unlinkSync(tempAudioPath);
+            try {
+                fs.unlinkSync(tempAudioPath);
+            } catch (cleanupErr) {
+                console.error('[CLEANUP_ERROR]', cleanupErr.message);
+            }
         }
     }
 });
 
 function runPythonScript(scriptPath, args) {
     return new Promise((resolve, reject) => {
-        const python = spawn('python3', [scriptPath, ...args]);
+        // Use the platform-specific python command
+        const python = spawn(PYTHON_CMD, [scriptPath, ...args]);
         
         let output = '';
         let error = '';
@@ -85,7 +101,7 @@ function runPythonScript(scriptPath, args) {
         
         python.on('close', (code) => {
             if (code !== 0) {
-                reject(new Error(`Python error (${code}): ${error}`));
+                reject(new Error(`Python error (Code ${code}): ${error}`));
             } else {
                 try {
                     const result = JSON.parse(output);
@@ -102,4 +118,4 @@ function runPythonScript(scriptPath, args) {
     });
 }
 
-module.exports = router;
+export default router;

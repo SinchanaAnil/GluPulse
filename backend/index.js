@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const vocalRiskRouter = require('./routes/vocal-risk');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import vocalRiskRouter from './routes/vocal-risk.js'; // Note the .js extension!
 
 dotenv.config();
 
