@@ -1,7 +1,15 @@
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 
-const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } };
+const stagger = { animate: { transition: { staggerChildren: 0.06 } } };
+const fadeUp = {
+  initial: { opacity: 0, y: 20, scale: 0.96 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4 } },
+};
+const rowFade = {
+  initial: { opacity: 0, x: -8 },
+  animate: { opacity: 1, x: 0 },
+};
 
 const auditData = [
   { timestamp: "Today 3:14 PM", event: "Glucose dropped to 65 mg/dL", risk: 72, action: "SOS modal shown" },
@@ -16,8 +24,8 @@ const riskColor = (r: number) => r >= 60 ? "text-secondary" : r >= 30 ? "text-wa
 
 export default function PhysicianPortal() {
   return (
-    <div className="space-y-6">
-      <motion.div {...fadeUp} className="glass-card p-6">
+    <motion.div className="space-y-6" variants={stagger} initial="initial" animate="animate">
+      <motion.div variants={fadeUp} className="glass-card p-6">
         <div className="flex items-center gap-2 mb-6">
           <Shield className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Physician Audit Portal</h2>
@@ -32,19 +40,23 @@ export default function PhysicianPortal() {
                 <th className="text-left py-3 px-4 text-muted-foreground font-medium">Action Taken</th>
               </tr>
             </thead>
-            <tbody>
+            <motion.tbody variants={stagger}>
               {auditData.map((row, i) => (
-                <motion.tr key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                <motion.tr
+                  key={i}
+                  variants={rowFade}
+                  className="border-b border-border/50 hover:bg-primary/5 transition-colors duration-200 cursor-default"
+                >
                   <td className="py-3 px-4 text-muted-foreground">{row.timestamp}</td>
                   <td className="py-3 px-4 text-foreground">{row.event}</td>
                   <td className={`py-3 px-4 font-medium ${riskColor(row.risk)}`}>{row.risk}</td>
                   <td className="py-3 px-4 text-muted-foreground">{row.action}</td>
                 </motion.tr>
               ))}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
