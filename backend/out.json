@@ -1,0 +1,6 @@
+{
+  "error": {
+    "message": "Upstream error from Alibaba: <400> InternalError.Algo.InvalidParameter: The image length and width do not meet the model restrictions. [height:1 or width:1 must be larger than 10]",
+    "code": 502
+  }
+}
