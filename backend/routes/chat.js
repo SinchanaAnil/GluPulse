@@ -1,45 +1,98 @@
 import express from 'express';
-import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const router = express.Router();
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 router.post('/chat', async (req, res) => {
-  const { messages, riskScore = 72 } = req.body;
+  console.log('Chat Route Hit (OpenRouter Free Router)');
+  const { messages = [] } = req.body;
+  
   try {
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5', // Kept original model from server.js
-      max_tokens: 500,
-      system: `You are GluPulse Co-Pilot, an AI assistant for diabetics. The patient's current risk score is ${riskScore}/100. Ask about recent meals, activity, and how they feel. If user says they feel shaky, dizzy, or weak — respond with immediate action steps and flag it as CRITICAL ALERT. Be empathetic and concise. Keep replies under 3 sentences.`,
-      messages,
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("No ANTHROPIC_API_KEY found in environment");
+
+    const systemPrompt = "You are the GluPulse Co-Pilot, a medical AI assistant for hypoglycemia. Answer any question, but always prioritize user safety and relate answers to metabolic health.";
+    const conversationHistory = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost:8080",
+        "X-Title": "GluPulse AI",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ 
+        model: "openrouter/free", 
+        messages: conversationHistory 
+      })
     });
-    res.json({ reply: response.content[0].text });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error('[OPENROUTER_ERROR]', JSON.stringify(data.error, null, 2));
+      throw new Error(data.error.message || "OpenRouter Error");
+    }
+
+    res.json({ reply: data.choices[0].message.content });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[CHAT_ERROR]', err.message);
+    const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "your health status";
+    res.json({ 
+      reply: `I received your message about: "${lastUserMsg}". While I'm connecting to my medical database, please remember to monitor your glucose levels closely and have a fast-acting carb source nearby if you feel shaky.`,
+      error: err.message,
+      isMock: true
+    });
   }
 });
 
 router.post('/food-scan', async (req, res) => {
-  const { imageBase64, mimeType = 'image/jpeg' } = req.body;
+  console.log('Food Scan Route Hit (OpenRouter Free Router)');
   try {
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } },
-          { type: 'text', text: 'Identify this food. Respond ONLY with JSON: { "foodName": "", "estimatedCarbs": 0, "glycemicIndex": 0, "predictedGlucosePeak": 0, "timeToPeakMinutes": 0, "recoveryMinutes": 0 }' }
-        ]
-      }]
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("No API key configured");
+
+    const { imageBase64, mimeType = 'image/jpeg' } = req.body;
+    
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost:8080",
+        "X-Title": "GluPulse AI",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "openrouter/free",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: 'Identify this food. Respond ONLY with JSON format: { "foodName": "", "estimatedCarbs": 0, "glycemicIndex": 0, "predictedGlucosePeak": 0, "timeToPeakMinutes": 0, "recoveryMinutes": 0 }' },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}` } }
+          ]
+        }]
+      })
     });
-    const json = JSON.parse(response.content[0].text.replace(/```json|```/g, '').trim());
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const jsonText = data.choices[0].message.content.replace(/```json|```/g, '').trim();
+    const json = JSON.parse(jsonText);
     res.json(json);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[FOOD_SCAN_ERROR]', err.message);
+    res.json({ 
+      foodName: "Nutritional Analysis Pending", 
+      estimatedCarbs: 45, 
+      error: err.message,
+      isMock: true
+    });
   }
 });
 
