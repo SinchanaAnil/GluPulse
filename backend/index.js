@@ -19,7 +19,21 @@ app.use('/api', vocalRiskRouter);
 app.use('/api', chatRouter);
 app.use('/api', reflexRouter);
 
-// --- 2. Timeline Data Route (NEW) ---
+// --- 2. Emergency Response API (Mock) ---
+app.post('/api/emergency/send-email', (req, res) => {
+    const { userName, payload } = req.body;
+    console.log(`[EMERGENCY_ALERT] Sending SOS for ${userName} to Physician/Guardian...`);
+    console.log(`[PAYLOAD]`, payload);
+    
+    // Simulate latency/success
+    res.json({ 
+        status: 'SOS Broadcast Dispatched', 
+        timestamp: new Date(),
+        target: 'Dr. Smith & Guardian'
+    });
+});
+
+// --- 3. Timeline Data Route (NEW) ---
 app.get('/api/timeline-data', (req, res) => {
     res.json({
         timeline: [

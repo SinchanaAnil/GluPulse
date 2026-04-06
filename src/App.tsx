@@ -14,6 +14,7 @@ import ReflexTest from "@/pages/ReflexTest";
 import Timeline from "@/pages/Timeline";
 import PhysicianPortal from "@/pages/PhysicianPortal";
 import Chatbot from "@/pages/Chatbot";
+import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
 
@@ -38,6 +39,7 @@ const App = () => (
                   <Route path="/timeline" element={<Timeline />} />
                   <Route path="/physician" element={<PhysicianPortal />} />
                   <Route path="/chatbot" element={<Chatbot />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Route>

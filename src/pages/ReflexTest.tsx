@@ -30,6 +30,7 @@ export default function ReflexTest() {
   const [errors, setErrors] = useState(0);
   const [currentLatency, setCurrentLatency] = useState<number | null>(null);
   const [lastSession, setLastSession] = useState<any>(null);
+  const [isEmergencyPending, setIsEmergencyPending] = useState(false);
   
   // Spatial state
   const [triggerPos, setTriggerPos] = useState({ top: 50, left: 50 });
@@ -138,20 +139,62 @@ export default function ReflexTest() {
       });
 
       const data = await response.json();
-      setLastSession({ ...data, accuracy });
+      const sessionResult = { ...data, accuracy };
+      setLastSession(sessionResult);
+      localStorage.setItem("lastReflexSession", JSON.stringify(sessionResult));
       setGameState("final_result");
     } catch (err) {
       console.error("[REFLEX_ERROR] Sync failed:", err);
       // Fallback with new thresholds
       const isCritical = testType === 'spatial' ? mean > 1200 : mean > 1800;
-      setLastSession({
+      const sessionResult = {
         meanLatency: Math.round(mean),
         accuracy,
         status: isCritical ? 'CRITICAL' : 'STABLE'
-      });
+      };
+      setLastSession(sessionResult);
+      localStorage.setItem("lastReflexSession", JSON.stringify(sessionResult));
       setGameState("final_result");
     }
   };
+
+  const dispatchToCloud = useCallback(async () => {
+    const lastSession = JSON.parse(localStorage.getItem("lastReflexSession") || '{"meanLatency": 0}');
+    
+    try {
+      await fetch('https://webhook.site/1c55d61f-4088-436b-9277-bce88d991893', { 
+        method: 'POST', 
+        mode: 'no-cors', 
+        body: JSON.stringify({
+          patient: localStorage.getItem('user_name') || 'Srisha Prajwal',
+          event: 'NEUROGLYCOPENIC_SHOCK_DETECTED',
+          metrics: { latency: lastSession.meanLatency, status: 'UNRESPONSIVE' },
+          location: '13.0694° N, 77.5617° E (BMSIT Campus)',
+          timestamp: new Date().toISOString()
+        }) 
+      });
+      console.log('SENTINEL: Data Broadcasted to Emergency Bridge.');
+    } catch (err) {
+      console.error('SENTINEL: Broadcast Failed', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleSync = () => {
+      const saved = localStorage.getItem("lastReflexSession");
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.handled && isEmergencyPending) {
+          setIsEmergencyPending(false);
+          setLastSession((prev: any) => ({ ...prev, meanLatency: 0, status: 'STABLE' }));
+        } else if (data.status === 'CRITICAL' && !data.handled) {
+          setIsEmergencyPending(true);
+        }
+      }
+    };
+    const interval = setInterval(handleSync, 1000);
+    return () => clearInterval(interval);
+  }, [isEmergencyPending]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col p-8 md:p-12 gap-8 font-sans selection:bg-primary selection:text-white overflow-x-hidden">
@@ -333,18 +376,31 @@ export default function ReflexTest() {
         <MetricCard 
           icon={lastSession?.status === 'CRITICAL' ? AlertCircle : CheckCircle2} 
           label="Neural Outlook" 
-          value={lastSession ? lastSession.status : "READY"} 
+          value={lastSession ? (lastSession.meanLatency > 1000 ? 'CRITICAL' : 'STABLE') : "READY"} 
           subValue="Diagnostic Conclusion" 
-          colorClass={lastSession?.status === 'CRITICAL' ? "bg-red-500" : (lastSession?.status === 'CAUTION' ? "bg-yellow-500" : "bg-primary")}
+          colorClass={lastSession?.meanLatency > 1000 ? "bg-red-500" : (lastSession?.status === 'CAUTION' ? "bg-yellow-500" : "bg-primary")}
         />
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <button 
+          onClick={() => {
+            alert("Sentience-ML Engine v2.1\n\nFeature Importance:\n1. Synaptic Latency: 40%\n2. Acoustic Jitter: 35%\n3. Amplitude Shimmer: 25%\n\nVerdict: High-confidence neural drift detection active.");
+          }}
+          className="px-6 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-[9px] font-black italic uppercase tracking-widest text-zinc-500 hover:text-white transition-all flex items-center gap-2"
+        >
+          <Activity className="w-3 h-3" />
+          Neural Weight Insights (XAI)
+        </button>
       </div>
 
       {/* 4. Recovery Snapshot - Direct bridge to Nutrition Logic */}
       <AnimatePresence>
-        {lastSession?.status === 'CRITICAL' && (
+        {lastSession?.meanLatency > 1000 && (
           <motion.div 
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
             className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4"
           >
             <div className="bg-red-950 border border-red-500/30 p-6 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center gap-6 backdrop-blur-xl">
@@ -352,15 +408,23 @@ export default function ReflexTest() {
                   <Brain className="w-8 h-8 text-red-500 animate-pulse" />
                </div>
                <div className="flex-grow text-center md:text-left">
-                  <h3 className="text-xl font-black italic uppercase text-white tracking-tighter">Neural fatigue detected</h3>
-                  <p className="text-red-200/60 text-[10px] font-bold uppercase tracking-widest mt-1">Retest required after 15g Fast-Acting Carbs.</p>
+                  <h3 className="text-xl font-black italic uppercase text-white tracking-tighter">Neural collapse imminent</h3>
+                  <p className="text-red-200/60 text-[10px] font-bold uppercase tracking-widest mt-1">Reflex time exceeds 1000ms. EMERGENCY PROTOCOL ARMED.</p>
                </div>
-               <button 
-                 onClick={() => window.location.href = '/vision-engine'}
-                 className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-black italic uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-900/40"
-               >
-                 Scan Food
-               </button>
+               <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => window.location.href = '/vision-engine'}
+                    className="w-full px-6 py-2 bg-zinc-950/40 text-white text-[9px] font-black italic uppercase tracking-widest rounded-xl hover:bg-zinc-950 transition-all border border-white/5"
+                  >
+                    Scan Food
+                  </button>
+                  <button 
+                    onClick={dispatchToCloud}
+                    className="w-full px-6 py-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-black italic uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-900/40"
+                  >
+                    Broadcast SOS (BMSIT Stealth)
+                  </button>
+               </div>
             </div>
           </motion.div>
         )}

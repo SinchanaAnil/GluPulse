@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { Heart, Activity, Droplet } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Activity, Droplet, ShieldAlert } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
 const chartData = [
@@ -68,8 +68,31 @@ const tableData = [
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
+  const profile = JSON.parse(localStorage.getItem("gluPulseProfile") || '{}');
+  const isProfileIncomplete = !profile.fullName || !profile.physicianEmail || !profile.emergencyPhone;
+
   return (
     <div className="relative w-full min-h-screen pt-4">
+      {/* Blinking Red Warning */}
+      <AnimatePresence>
+        {isProfileIncomplete && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4"
+          >
+            <div className="bg-rose-600 p-2 rounded-2xl flex items-center justify-center gap-2 border-2 border-white/50 shadow-2xl animate-pulse">
+               <ShieldAlert className="w-5 h-5 text-white" />
+               <span className="text-[10px] font-black italic uppercase text-white tracking-widest text-center">
+                 ⚠️ EMERGENCY CONTACT NOT CONFIGURED
+                 <a href="/profile" className="ml-2 underline text-white/80">FIX NOW</a>
+               </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Anatomical Figure - Pure Element */}
       <img 
         src="/assets/anatomical_figure.png" 

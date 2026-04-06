@@ -6,6 +6,8 @@ import {
   Activity,
   BarChart2,
   Settings,
+  User,
+  ShieldCheck,
   Sun,
   Moon,
   LogOut
@@ -19,8 +21,10 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: Heart, label: "Vitals", path: "/voice" },
   { icon: Dna, label: "Genetics", path: "/vision" },
-  { icon: Activity, label: "Dental", path: "/reflex" },
-  { icon: BarChart2, label: "Reports", path: "/timeline" },
+  { icon: Activity, label: "Reflex", path: "/reflex" },
+  { icon: BarChart2, label: "Timeline", path: "/timeline" },
+  { icon: User, label: "Profile", path: "/profile" },
+  { icon: ShieldCheck, label: "Physician Vault", path: "/physician" },
   { icon: Settings, label: "Settings", path: "/chatbot" },
 ];
 
