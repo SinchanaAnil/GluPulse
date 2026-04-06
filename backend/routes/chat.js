@@ -19,7 +19,7 @@ router.post('/chat', async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "qwen/qwen3.6-plus:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         max_tokens: 500,
         messages: [
           {
