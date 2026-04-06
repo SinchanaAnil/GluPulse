@@ -92,9 +92,11 @@ export default function Login() {
       {/* Subtle Gradient to ensure the left text is highly readable */}
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent pointer-events-none" />
 
-      {/* TOP NAVIGATION BAR EXACT MATCH */}
       <nav className="relative z-20 flex items-center justify-between px-8 py-5 lg:px-12 w-full">
-        <div className="text-[22px] font-medium tracking-tight">GluPulse</div>
+        <div className="flex items-center gap-3 text-[22px] font-medium tracking-tight">
+          <img src="/favicon.ico" alt="Logo" className="h-7 w-7 object-contain" />
+          GluPulse
+        </div>
         
         <div className="hidden lg:flex items-center gap-7 text-[13px] font-medium text-slate-300">
           <a href="#" className="hover:text-white transition-colors">What's Included</a>

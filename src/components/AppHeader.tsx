@@ -6,7 +6,7 @@ export function AppHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-30 flex h-16 items-center justify-between px-6 transition-colors duration-500 navbar-glass pl-[84px]">
       <div className="flex items-center gap-2">
-        <Dna className="h-5 w-5 text-[#111827] dark:text-[#F9FAFB]" />
+        <img src="/favicon.ico" alt="GluPulse Logo" className="h-6 w-6 object-contain" />
         <span className="brand-name lowercase">glupulse</span>
       </div>
 

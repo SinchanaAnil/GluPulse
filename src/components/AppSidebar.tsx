@@ -1,6 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
+<<<<<<< HEAD
   Heart,
   Dna,
   Activity,
@@ -8,6 +9,13 @@ import {
   Settings,
   User,
   ShieldCheck,
+=======
+  Mic,
+  Eye,
+  Zap,
+  Clock,
+  MessageCircle,
+>>>>>>> c2125e92a0936bf1998098f1a1406c4005479e66
   Sun,
   Moon,
   LogOut
@@ -18,6 +26,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
+<<<<<<< HEAD
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: Heart, label: "Vitals", path: "/voice" },
   { icon: Dna, label: "Genetics", path: "/vision" },
@@ -26,6 +35,14 @@ const navItems = [
   { icon: User, label: "Profile", path: "/profile" },
   { icon: ShieldCheck, label: "Physician Vault", path: "/physician" },
   { icon: Settings, label: "Settings", path: "/chatbot" },
+=======
+  { icon: LayoutDashboard, label: "Home", path: "/" },
+  { icon: Mic, label: "Voice", path: "/voice" },
+  { icon: Eye, label: "Vision", path: "/vision" },
+  { icon: Zap, label: "Reflex", path: "/reflex" },
+  { icon: Clock, label: "History", path: "/timeline" },
+  { icon: MessageCircle, label: "AI Chat", path: "/chatbot" },
+>>>>>>> c2125e92a0936bf1998098f1a1406c4005479e66
 ];
 
 export function AppSidebar() {
@@ -35,7 +52,15 @@ export function AppSidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col items-center py-6 gap-2 transition-colors duration-500 sidebar-glass">
-      <nav className="flex flex-1 flex-col items-center gap-6 mt-14">
+      <div className="mb-4">
+        <Link to="/" className="flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full overflow-hidden border border-white/20 bg-white/10 flex items-center justify-center">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+          </div>
+        </Link>
+      </div>
+
+      <nav className="flex flex-1 flex-col items-center gap-6 mt-4">
         {navItems.map((item) => {
           const active = location.pathname === item.path;
           return (
