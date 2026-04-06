@@ -1,202 +1,204 @@
 import { motion } from "framer-motion";
-import { Heart, Activity, Droplets, AlertTriangle, Mic, Camera, Zap, MessageCircle } from "lucide-react";
+import { Heart, Activity, Droplet } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Link } from "react-router-dom";
-import { useCountUp } from "@/hooks/use-count-up";
 
 const chartData = [
-  { time: "6AM", glucose: 95, activity: 20, risk: 10 },
-  { time: "8AM", glucose: 140, activity: 40, risk: 15 },
-  { time: "10AM", glucose: 110, activity: 60, risk: 8 },
-  { time: "12PM", glucose: 85, activity: 50, risk: 20 },
-  { time: "2PM", glucose: 65, activity: 30, risk: 45 },
-  { time: "4PM", glucose: 78, activity: 70, risk: 30 },
-  { time: "6PM", glucose: 120, activity: 45, risk: 12 },
-  { time: "8PM", glucose: 105, activity: 25, risk: 10 },
-  { time: "10PM", glucose: 90, activity: 10, risk: 8 },
+  { time: "6AM", glucose: 95, activity: 5 },
+  { time: "8AM", glucose: 138, activity: 15 },
+  { time: "10AM", glucose: 110, activity: 20 },
+  { time: "12PM", glucose: 90, activity: 10 },
+  { time: "2PM", glucose: 95, activity: 35 },
+  { time: "4PM", glucose: 105, activity: 25 },
+  { time: "6PM", glucose: 120, activity: 30 },
+  { time: "8PM", glucose: 110, activity: 10 },
+  { time: "10PM", glucose: 95, activity: 5 },
 ];
 
-const metrics = [
-  { title: "Heart Rate", value: 72, unit: "bpm", status: "stable", icon: Heart, color: "text-secondary" },
-  { title: "Blood Pressure", value: 120, extra: "/80", unit: "mmHg", status: "optimal", icon: Activity, color: "text-success" },
-  { title: "SpO2", value: 99, unit: "%", status: "perfect", icon: Droplets, color: "text-primary" },
-];
-
-const quickActions = [
-  { label: "Run Voice Check", icon: Mic, path: "/voice" },
-  { label: "Upload Meal", icon: Camera, path: "/vision" },
-  { label: "Start Reflex Test", icon: Zap, path: "/reflex" },
-  { label: "Open Chatbot", icon: MessageCircle, path: "/chatbot" },
-];
-
-const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
+const stagger = { animate: { transition: { staggerChildren: 0.06 } } };
 const fadeUp = {
-  initial: { opacity: 0, y: 20, scale: 0.96 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeInOut" as const } },
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
 };
 
-function MetricCard({ m, index }: { m: typeof metrics[0]; index: number }) {
-  const animatedValue = useCountUp(m.value, 1200, 200 + index * 150);
-
+function GaugeCard({ title, value, unit, status, icon: Icon, color, range, percentage }: any) {
+  const dashArray = (percentage / 100) * 251.2;
+  
   return (
-    <motion.div variants={fadeUp} className="glass-card-hover p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-muted-foreground">{m.title}</span>
-        <m.icon className={`h-5 w-5 ${m.color} hover-icon-scale`} />
+    <motion.div variants={fadeUp} className="glass-card p-5 flex flex-col justify-between h-full min-h-[160px]">
+      <div className="flex items-center justify-between mb-2">
+        <Icon className={cn("h-[18px] w-[18px]", color)} />
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-semibold text-foreground tabular-nums">{animatedValue}</span>
-        {"extra" in m && <span className="text-3xl font-semibold text-foreground">{m.extra}</span>}
-        <span className="text-sm text-muted-foreground">{m.unit}</span>
+      <div className="flex justify-center relative my-1">
+        <svg fill="none" viewBox="0 0 100 100" className="w-[120px] h-[120px] rotate-[-90deg]">
+          <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.2)" strokeWidth="10" strokeLinecap="round" />
+          <motion.circle
+            cx="50" cy="50" r="40"
+            stroke="#22C55E"
+            strokeWidth="10"
+            strokeLinecap="round"
+            initial={{ strokeDasharray: "0 251.2" }}
+            animate={{ strokeDasharray: `${251.2 * (percentage/100)} 251.2` }}
+            transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] as any }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
+          <span className="text-[28px] font-extrabold text-foreground leading-none">{value}</span>
+          <span className="text-[12px] text-muted-foreground font-medium mt-1">{unit}</span>
+        </div>
       </div>
-      <span className={`mt-2 inline-block text-xs font-medium ${m.status === "stable" ? "text-primary" : m.status === "optimal" ? "text-success" : "text-primary"}`}>
-        {m.status}
-      </span>
+      <div className="text-center mt-1">
+        <span className="text-[13px] font-bold uppercase tracking-wider text-[#22C55E] block">{status}</span>
+        <div className="flex justify-between items-center mt-2 text-[11px] text-muted-foreground font-medium px-2">
+          <span>{range[0]}</span>
+          <span>{range[1]}</span>
+        </div>
+      </div>
     </motion.div>
   );
 }
 
-function RiskGauge({ score }: { score: number }) {
-  const animatedScore = useCountUp(score, 1500, 300);
-  const dashLength = (score / 100) * 264;
+const tableData = [
+  { id: 1, indicator: "SpO2", category: "Respiratory", low: "<95%", result: "99%", high: ">100%", status: "Perfect" },
+  { id: 2, indicator: "Blood Pressure", category: "Cardiovascular", low: "<90/60", result: "120/80 mmHg", high: ">140/90", status: "Optimal" },
+  { id: 3, indicator: "Heart Rate", category: "Cardiovascular", low: "<60 bpm", result: "72 bpm", high: ">100 bpm", status: "Stable" },
+  { id: 4, indicator: "Glucose (Fast)", category: "Metabolic", low: "<70 mg/dL", result: "95 mg/dL", high: ">126 mg/dL", status: "Normal" },
+  { id: 5, indicator: "Glucose (Meal)", category: "Metabolic", low: "<70 mg/dL", result: "138 mg/dL", high: ">180 mg/dL", status: "Normal" },
+];
 
-  return (
-    <div className="hidden md:flex h-24 w-24 items-center justify-center relative">
-      <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
-        <motion.circle
-          cx="50" cy="50" r="42" fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="6"
-          strokeLinecap="round"
-          initial={{ strokeDasharray: "0 264" }}
-          animate={{ strokeDasharray: `${dashLength} 264` }}
-          transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
-        />
-      </svg>
-      <span className="absolute text-lg font-semibold text-foreground">{animatedScore}</span>
-    </div>
-  );
-}
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
-  const riskScore = 24;
-  const riskLevel = riskScore < 30 ? "Low" : riskScore < 60 ? "Moderate" : "High";
-  const riskColor = riskScore < 30 ? "text-success" : riskScore < 60 ? "text-warning" : "text-secondary";
-
   return (
-    <motion.div className="space-y-6" variants={stagger} initial="initial" animate="animate">
-      {/* Two-column: Spline 3D + Dashboard */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left: 3D Spline Model */}
-        <motion.div
-          variants={fadeUp}
-          className="lg:w-[42%] w-full min-h-[70vh] rounded-[var(--radius)] overflow-hidden relative flex items-center justify-center"
-          style={{
-            background: "radial-gradient(ellipse at 30% 50%, hsla(var(--secondary) / 0.15), hsla(var(--primary) / 0.08) 60%, transparent 100%)",
-            border: "1px solid hsl(var(--glass-border))",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          {/* Ambient glow overlays */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-48 h-48 rounded-full bg-primary/10 blur-[80px] animate-pulse-glow" />
-            <div className="absolute bottom-1/4 right-1/4 w-36 h-36 rounded-full bg-secondary/10 blur-[60px] animate-pulse-glow" style={{ animationDelay: "1s" }} />
-          </div>
-          {/* Shadow under model */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-black/20 blur-2xl rounded-full" />
-          <iframe
-            src="https://my.spline.design/untitled-0urFPT7tnjM8oMOKP60RTphA/"
-            className="w-full h-full absolute inset-0"
-            style={{ border: "none", background: "transparent" }}
-            loading="lazy"
-            title="GluPulse 3D Model"
-            allow="autoplay"
-          />
-        </motion.div>
+    <div className="relative w-full min-h-screen pt-4">
+      {/* Anatomical Figure - Pure Element */}
+      <img 
+        src="/assets/anatomical_figure.png" 
+        alt="Anatomical Figure" 
+        className="fixed left-[80px] top-[64px] h-[calc(100vh-64px)] w-auto max-w-[42%] object-contain object-top z-0 pointer-events-none select-none body-figure"
+      />
 
-        {/* Right: Data Dashboard */}
-        <div className="lg:w-[58%] w-full space-y-6">
-          {/* Risk Overview */}
-          <motion.div variants={fadeUp} className="glass-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Hypoglycemia Risk Score</p>
-                <div className="flex items-baseline gap-3">
-                  <span className={`text-5xl font-semibold ${riskColor} glow-text-primary tabular-nums`}>
-                    {useCountUp(riskScore, 1500, 200)}
-                  </span>
-                  <span className="text-lg text-muted-foreground">/ 100</span>
+      <motion.div 
+        className="relative z-10 w-full flex justify-end pr-2"
+        variants={stagger}
+        initial="initial"
+        animate="animate"
+      >
+        <div className="w-full lg:w-[58%] flex flex-col gap-4">
+          
+          {/* Row 1: Heading + Patient Stats */}
+          <motion.div variants={fadeUp} className="flex flex-col md:flex-row items-start justify-between gap-4 mb-4">
+            <h1 className="text-[56px] font-[800] text-foreground tracking-[-2px] leading-[1.0] font-sans">
+              Medical<br />Dashboard
+            </h1>
+            
+            <div className="flex gap-2.5">
+              {[
+                { label: "BLOOD", value: "O+" },
+                { label: "HEIGHT", value: "186 cm" },
+                { label: "WEIGHT", value: "90 kg" }
+              ].map((stat) => (
+                <div key={stat.label} className="glass-card px-[18px] py-[10px] min-w-[100px]">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-0.5">{stat.label}</span>
+                  <span className="text-[20px] font-bold text-foreground">{stat.value}</span>
                 </div>
-                <motion.div
-                  className="mt-2 flex items-center gap-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.8 }}
-                >
-                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${riskScore < 30 ? "bg-success/15 text-success" : riskScore < 60 ? "bg-warning/15 text-warning" : "bg-secondary/15 text-secondary"}`}>
-                    <AlertTriangle className="h-3 w-3" />
-                    {riskLevel} Risk
-                  </span>
-                  <span className="text-sm text-muted-foreground">All vitals within normal range.</span>
-                </motion.div>
-              </div>
-              <RiskGauge score={riskScore} />
+              ))}
             </div>
           </motion.div>
 
-          {/* Metrics Row */}
-          <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-4" variants={stagger}>
-            {metrics.map((m, i) => (
-              <MetricCard key={m.title} m={m} index={i} />
-            ))}
-          </motion.div>
+          {/* Row 2: 3 Metric Gauge Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <GaugeCard 
+              title="Heart Rate" value="72" unit="bpm" status="stable"
+              icon={Heart} color="text-[#EF4444]" percentage={30} range={["60", "100"]}
+            />
+            <GaugeCard 
+              title="Blood Pressure" value="120/80" unit="mmHg" status="optimal"
+              icon={Activity} color="text-muted-foreground" percentage={80} range={["90/60", "140/90"]}
+            />
+            <GaugeCard 
+              title="Glucose Level" value="95" unit="mg/dL" status="normal"
+              icon={Droplet} color="text-[#06B6D4]" percentage={25} range={["70", "126"]}
+            />
+          </div>
 
-          {/* Activity Chart */}
+          {/* Row 3: Activity & Glucose Trends */}
           <motion.div variants={fadeUp} className="glass-card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">Activity & Glucose Trends</h3>
-            <div className="h-56">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-baseline gap-3">
+                <h3 className="text-[15px] font-bold text-foreground">Activity & Glucose Trends</h3>
+                <span className="text-[12px] text-muted-foreground">Today · 6AM – 10PM</span>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#06B6D4]" />
+                  <span className="text-[11px] font-bold text-foreground uppercase">Glucose</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#F97316]" />
+                  <span className="text-[11px] font-bold text-foreground uppercase">Activity</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="h-[180px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="glucoseGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(187, 100%, 50%)" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="hsl(187, 100%, 50%)" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="riskGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(0, 100%, 65%)" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="hsl(0, 100%, 65%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 30%, 20%)" />
-                  <XAxis dataKey="time" stroke="hsl(215, 20%, 45%)" fontSize={12} />
-                  <YAxis stroke="hsl(215, 20%, 45%)" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "hsl(220, 40%, 14%)", border: "1px solid hsl(220, 30%, 22%)", borderRadius: "12px", color: "hsl(210, 30%, 92%)" }}
-                    cursor={{ stroke: "hsl(187, 100%, 50%)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} dx={-10} ticks={[0, 35, 70, 105, 140]} />
+                  <Tooltip 
+                    contentStyle={{ background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "10px" }}
                   />
-                  <Area type="monotone" dataKey="glucose" stroke="hsl(187, 100%, 50%)" fill="url(#glucoseGrad)" strokeWidth={2} animationDuration={2000} animationEasing="ease-out" />
-                  <Area type="monotone" dataKey="risk" stroke="hsl(0, 100%, 65%)" fill="url(#riskGrad)" strokeWidth={2} animationDuration={2000} animationEasing="ease-out" animationBegin={400} />
+                  <Area type="monotone" dataKey="glucose" stroke="#06B6D4" strokeWidth={2.5} fill="transparent" />
+                  <Area type="monotone" dataKey="activity" stroke="#F97316" strokeWidth={2} fill="transparent" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
-        </div>
-      </div>
 
-      {/* Quick Actions */}
-      <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4" variants={stagger}>
-        {quickActions.map((a) => (
-          <motion.div key={a.label} variants={fadeUp}>
-            <Link to={a.path} className="glass-card-hover p-4 flex flex-col items-center gap-3 text-center cursor-pointer block">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary hover-icon-scale">
-                <a.icon className="h-6 w-6" />
-              </div>
-              <span className="text-sm font-medium text-foreground">{a.label}</span>
-            </Link>
+          {/* Row 4: Lab Indicators Table */}
+          <motion.div variants={fadeUp} className="glass-card overflow-hidden">
+            <div className="p-5 pb-3 border-b border-white/20">
+              <h3 className="text-[15px] font-bold text-foreground">Lab Indicators</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-white/10">
+                    <th className="py-3 px-5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Indicator</th>
+                    <th className="py-3 px-5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category</th>
+                    <th className="py-3 px-5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Low</th>
+                    <th className="py-3 px-5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Result</th>
+                    <th className="py-3 px-5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">High</th>
+                    <th className="py-3 px-5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right pr-8">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableData.map((row) => (
+                    <tr key={row.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                      <td className="py-4 px-5 text-[13px] font-bold text-foreground">{row.indicator}</td>
+                      <td className="py-4 px-5">
+                        <span className="px-2 py-0.5 rounded-md bg-white/30 text-[10px] font-bold text-foreground uppercase border border-white/20">
+                          {row.category}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 text-[12px] font-medium text-muted-foreground text-center">{row.low}</td>
+                      <td className="py-4 px-5 text-[13px] font-[800] text-foreground text-center">{row.result}</td>
+                      <td className="py-4 px-5 text-[12px] font-medium text-muted-foreground text-center">{row.high}</td>
+                      <td className="py-4 px-5 text-right pr-8">
+                        <span className="px-3 py-1 rounded-full bg-[#16A34A]/15 text-[#16A34A] text-[11px] font-bold uppercase tracking-wide border border-[#16A34A]/20 backdrop-blur-sm">
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
-        ))}
+
+        </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

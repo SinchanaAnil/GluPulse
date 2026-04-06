@@ -1,37 +1,35 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
-  Mic,
-  Eye,
-  Zap,
-  Clock,
-  Stethoscope,
-  MessageCircle,
+  Heart,
+  Dna,
+  Activity,
+  BarChart2,
+  Settings,
+  Sun,
+  Moon,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { SignOutControl } from "@/components/SignOutControl";
+import { useTheme } from "@/components/ThemeProvider";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Mic, label: "Voice Biomarker", path: "/voice" },
-  { icon: Eye, label: "Vision Engine", path: "/vision" },
-  { icon: Zap, label: "Reflex Test", path: "/reflex" },
-  { icon: Clock, label: "Timeline", path: "/timeline" },
-  { icon: Stethoscope, label: "Physician Portal", path: "/physician" },
-  { icon: MessageCircle, label: "AI Chatbot", path: "/chatbot" },
+  { icon: Heart, label: "Vitals", path: "/voice" },
+  { icon: Dna, label: "Genetics", path: "/vision" },
+  { icon: Activity, label: "Dental", path: "/reflex" },
+  { icon: BarChart2, label: "Reports", path: "/timeline" },
+  { icon: Settings, label: "Settings", path: "/chatbot" },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
+  const { theme, toggle } = useTheme();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[72px] flex-col items-center border-r border-border bg-sidebar py-6 gap-2">
-      <Link to="/" className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg gradient-primary">
-        <span className="text-sm font-bold text-primary-foreground">GP</span>
-      </Link>
-
-      <nav className="flex flex-1 flex-col items-center gap-1">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col items-center py-6 gap-2 transition-colors duration-500 sidebar-glass">
+      <nav className="flex flex-1 flex-col items-center gap-6 mt-14">
         {navItems.map((item) => {
           const active = location.pathname === item.path;
           return (
@@ -39,28 +37,41 @@ export function AppSidebar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "group relative flex h-11 w-11 items-center justify-center rounded-lg transition-all duration-200",
+                "group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200",
                 active
-                  ? "bg-primary/15 text-primary glow-border-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-white/45 dark:bg-white/10 text-primary shadow-sm ring-1 ring-white/20"
+                  : "text-muted-foreground hover:bg-white/20 hover:text-foreground"
               )}
               title={item.label}
             >
-              {active && (
-                <motion.div
-                  layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-lg bg-primary/15"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                />
-              )}
               <item.icon className="relative z-10 h-5 w-5" />
             </Link>
           );
         })}
       </nav>
 
-      <div className="flex flex-col items-center border-t border-border pt-2">
-        <SignOutControl variant="sidebar" />
+      <div className="flex flex-col items-center gap-6 pt-4 mb-2">
+        <button
+          onClick={toggle}
+          className="relative flex h-14 w-8 flex-col items-center justify-between rounded-full border border-white/30 bg-white/20 py-1 transition-colors duration-300 hover:bg-white/30 select-none backdrop-blur-md"
+          title="Toggle Theme"
+        >
+          <motion.div
+            className="absolute left-[3px] top-[3px] h-[24px] w-[24px] rounded-full bg-white shadow-md border border-white/50 dark:bg-black"
+            animate={{ y: theme === "dark" ? 22 : 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
+          <div className="z-10 flex h-6 w-6 items-center justify-center">
+            <Sun className={cn("h-3.5 w-3.5", theme === "light" ? "text-foreground" : "text-white/40")} />
+          </div>
+          <div className="z-10 flex h-6 w-6 items-center justify-center">
+            <Moon className={cn("h-3.5 w-3.5", theme === "dark" ? "text-white" : "text-muted-foreground")} />
+          </div>
+        </button>
+
+        <button className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-white/20 hover:text-foreground transition-all">
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
     </aside>
   );

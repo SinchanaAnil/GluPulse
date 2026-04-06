@@ -9,9 +9,9 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen bg-background transition-colors duration-500">
       <AppSidebar />
-      <div className="flex flex-1 flex-col pl-[72px]">
+      <div className="flex flex-1 flex-col pl-16">
         <AppHeader />
-        <main className="flex-1 p-6 overflow-hidden">
+        <main className="flex-1 p-6 pt-[88px] overflow-x-hidden">
           <PageTransition key={location.pathname}>
             <Outlet />
           </PageTransition>
