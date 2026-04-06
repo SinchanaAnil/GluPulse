@@ -18,8 +18,8 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Mic, label: "Voice Biomarker", path: "/voice" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Mic, label: "Voice", path: "/voice" },
   { icon: Eye, label: "Vision Center", path: "/vision" },
   { icon: Zap, label: "Reflex Test", path: "/reflex" },
   { icon: Clock, label: "Health Timeline", path: "/timeline" },

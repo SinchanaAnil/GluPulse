@@ -17,6 +17,7 @@ import Chatbot from "@/pages/Chatbot";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
+import Landing from "@/pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -29,10 +30,11 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route element={<AuthGuard />}>
                 <Route element={<AppLayout />}>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/voice" element={<VoiceBiomarker />} />
                   <Route path="/vision" element={<VisionEngine />} />
                   <Route path="/reflex" element={<ReflexTest />} />

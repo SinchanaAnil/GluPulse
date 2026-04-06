@@ -48,8 +48,8 @@ export default function Login() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#070b15]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F6F8F6] dark:bg-[#0F1412]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#6B8E23]" />
       </div>
     );
   }
@@ -80,34 +80,34 @@ export default function Login() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-[#030815] font-sans text-white overflow-hidden">
+    <div className="relative flex min-h-screen w-full flex-col bg-[#F6F8F6] dark:bg-[#0F1412] font-sans text-[#1F2A24] dark:text-[#E6F0EA] overflow-hidden transition-colors duration-500">
       
       {/* PERFECTLY MATCHED FULL PAGE ECG BACKGROUND */}
       <img
         src="/ecg_background.png"
         alt="Background"
-        className="absolute inset-0 z-0 h-full w-full object-cover object-center opacity-80"
+        className="absolute inset-0 z-0 h-full w-full object-cover object-center opacity-40 dark:opacity-80 transition-opacity duration-500"
       />
       
       {/* Subtle Gradient to ensure the left text is highly readable */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-white/60 via-white/20 to-transparent dark:from-black/70 dark:via-black/30 dark:to-transparent pointer-events-none" />
 
       <nav className="relative z-20 flex items-center justify-between px-8 py-5 lg:px-12 w-full">
-        <div className="flex items-center gap-3 text-[22px] font-medium tracking-tight">
-          <img src="/favicon.ico" alt="Logo" className="h-7 w-7 object-contain" />
+        <div className="flex items-center gap-3 text-[22px] font-bold tracking-tight text-[#1F2A24] dark:text-white">
+          <img src="/favicon.ico" alt="Logo" className="h-8 w-8 object-contain" />
           GluPulse
         </div>
         
-        <div className="hidden lg:flex items-center gap-7 text-[13px] font-medium text-slate-300">
-          <a href="#" className="hover:text-white transition-colors">What's Included</a>
-          <a href="#" className="hover:text-white transition-colors">Health Conditions</a>
-          <a href="#" className="hover:text-white transition-colors">For You</a>
-          <a href="#" className="hover:text-white transition-colors">For Professionals</a>
-          <a href="#" className="hover:text-white transition-colors">FAQ</a>
+        <div className="hidden lg:flex items-center gap-7 text-[13px] font-medium text-[#5F6F66] dark:text-slate-300">
+          <a href="#" className="hover:text-[#6B8E23] dark:hover:text-white transition-colors">What's Included</a>
+          <a href="#" className="hover:text-[#6B8E23] dark:hover:text-white transition-colors">Health Conditions</a>
+          <a href="#" className="hover:text-[#6B8E23] dark:hover:text-white transition-colors">For You</a>
+          <a href="#" className="hover:text-[#6B8E23] dark:hover:text-white transition-colors">For Professionals</a>
+          <a href="#" className="hover:text-[#6B8E23] dark:hover:text-white transition-colors">FAQ</a>
           
-          <button className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-bold text-black border-2 border-transparent hover:bg-slate-200 transition-all">
+          <button className="flex items-center gap-2 rounded-full bg-[#6B8E23] px-6 py-2.5 text-sm font-bold text-white border-2 border-transparent hover:bg-[#5A781E] shadow-lg shadow-[#6B8E23]/20 transition-all">
             Get Early Access
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-black text-white text-[10px]">
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-white/20 text-white text-[10px]">
               ↗
             </span>
           </button>
@@ -120,22 +120,22 @@ export default function Login() {
         {/* LEFT MARKETING CONTENT EXACT MATCH */}
         <div className="flex flex-col justify-center translate-y-[-2rem] space-y-24">
           
-          <h1 className="text-5xl lg:text-[68px] font-semibold leading-[1.05] tracking-tight text-white drop-shadow-lg">
+          <h1 className="text-5xl lg:text-[68px] font-bold leading-[1.05] tracking-tight text-[#1F2A24] dark:text-white drop-shadow-md">
             Turn Your Health<br />Data into Secure<br />Login
           </h1>
 
           <div className="space-y-7 max-w-[400px]">
-            <div>
-              <h3 className="text-[15px] font-medium text-white tracking-wide">ECG-Verified Access</h3>
-              <p className="text-[13px] text-slate-300 mt-1.5 leading-snug">Actionable trends without long wait times.</p>
+            <div className="p-4 rounded-2xl bg-[#6B8E23]/5 border border-[#6B8E23]/10 backdrop-blur-sm">
+              <h3 className="text-[15px] font-bold text-[#6B8E23] dark:text-[#8DAE4A] tracking-wide">ECG-Verified Access</h3>
+              <p className="text-[13px] text-[#5F6F66] dark:text-slate-300 mt-1 leading-snug">Actionable trends without long wait times.</p>
             </div>
             <div>
-              <h3 className="text-[15px] font-medium text-white tracking-wide">Real-Time Health Monitoring</h3>
-              <p className="text-[13px] text-slate-300 mt-1.5 leading-snug">Recommendations tailored to your goals and context.</p>
+              <h3 className="text-[15px] font-bold text-[#1F2A24] dark:text-white tracking-wide">Real-Time Health Monitoring</h3>
+              <p className="text-[13px] text-[#5F6F66] dark:text-slate-300 mt-1 leading-snug">Recommendations tailored to your goals and context.</p>
             </div>
             <div>
-              <h3 className="text-[15px] font-medium text-white tracking-wide">Personalized Security Guidance</h3>
-              <p className="text-[13px] text-slate-300 mt-1.5 leading-snug">Bringing activity, recovery, nutrition, and stress<br/>into one picture.</p>
+              <h3 className="text-[15px] font-bold text-[#1F2A24] dark:text-white tracking-wide">Personalized Security Guidance</h3>
+              <p className="text-[13px] text-[#5F6F66] dark:text-slate-300 mt-1 leading-snug">Bringing activity, recovery, nutrition, and stress into one picture.</p>
             </div>
           </div>
 
@@ -143,18 +143,18 @@ export default function Login() {
 
         {/* RIGHT ISOLATED SIGN IN CARD EXACTLY LIKE THE REFERENCE IMAGE */}
         <div className="flex justify-center flex-col lg:justify-center lg:items-end w-full lg:w-auto h-full translate-y-[-2rem]">
-          <div className="w-full max-w-[390px] rounded-[1.5rem] bg-[#0c121e]/90 p-8 shadow-2xl backdrop-blur-md border border-[#1f2937]/50 lg:mr-4">
+          <div className="w-full max-w-[390px] rounded-[2rem] bg-white/75 dark:bg-[#161C18]/75 p-9 shadow-2xl backdrop-blur-[20px] border border-[#E0E6E2] dark:border-white/10 lg:mr-4">
             
              {/* Header section matching exact font hierarchy */}
             <div className="mb-8">
-              <h1 className="text-[26px] font-bold tracking-tight text-white mb-2">
+              <h1 className="text-[28px] font-bold tracking-tight text-[#1F2A24] dark:text-white mb-2">
                 {mode === "signin" ? "Sign in" : "Create account"}
               </h1>
-              <p className="text-[12px] text-slate-400">
+              <p className="text-[13px] text-[#5F6F66] dark:text-[#AAB7AF]">
                 {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
                 <button
                   type="button"
-                  className="font-medium text-[#4b8df8] hover:underline"
+                  className="font-bold text-[#6B8E23] dark:text-[#8DAE4A] hover:underline"
                   onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
                   disabled={submitting}
                 >
@@ -164,30 +164,30 @@ export default function Login() {
             </div>
 
             {/* Inputs */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-slate-200 ml-0.5" htmlFor="email">
-                  Email
+                <label className="text-[11px] font-bold text-[#5F6F66] dark:text-[#AAB7AF] ml-0.5 tracking-[0.2em] uppercase" htmlFor="email">
+                  Clinical Identifier
                 </label>
-                <div className="rounded-xl bg-[#090d16] px-4 py-3 border border-[#161c29] focus-within:border-[#4b8df8] focus-within:ring-1 focus-within:ring-[#4b8df8]">
+                <div className="group relative rounded-2xl bg-white/5 dark:bg-white/5 px-5 py-4 border border-[#E0E6E2] dark:border-white/10 backdrop-blur-[8px] focus-within:border-[#6B8E23] dark:focus-within:border-[#8DAE4A] focus-within:ring-1 focus-within:ring-[#6B8E23]/10 focus-within:scale-[1.01] focus-within:shadow-[0_8px_30px_rgba(107,142,35,0.15)] transition-all duration-200 ease-out">
                   <input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="sinchana.anil1@gmail.com"
+                    placeholder="you@example.com"
                     autoComplete="email"
                     disabled={submitting}
-                    className="w-full bg-transparent text-[13px] text-white placeholder-slate-500 outline-none"
+                    className="w-full bg-transparent text-[14px] text-[#1F2A24] dark:text-white placeholder-[#A0ADA6]/70 outline-none font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-slate-200 ml-0.5" htmlFor="password">
-                  Password
+                <label className="text-[11px] font-bold text-[#5F6F66] dark:text-[#AAB7AF] ml-0.5 tracking-[0.2em] uppercase" htmlFor="password">
+                  Security Key
                 </label>
-                <div className="relative flex rounded-xl bg-[#090d16] pl-4 pr-10 py-3 border border-[#161c29] focus-within:border-[#4b8df8] focus-within:ring-1 focus-within:ring-[#4b8df8]">
+                <div className="group relative flex rounded-2xl bg-white/5 dark:bg-white/5 pl-5 pr-12 py-4 border border-[#E0E6E2] dark:border-white/10 backdrop-blur-[8px] focus-within:border-[#6B8E23] dark:focus-within:border-[#8DAE4A] focus-within:ring-1 focus-within:ring-[#6B8E23]/10 focus-within:scale-[1.01] focus-within:shadow-[0_8px_30px_rgba(107,142,35,0.15)] transition-all duration-200 ease-out">
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -196,15 +196,15 @@ export default function Login() {
                     placeholder="••••••••"
                     autoComplete={mode === "signin" ? "current-password" : "new-password"}
                     disabled={submitting}
-                    className="w-full bg-transparent text-[13px] text-white placeholder-slate-500 outline-none tracking-widest"
+                    className="w-full bg-transparent text-[14px] text-[#1F2A24] dark:text-white placeholder-[#A0ADA6]/70 outline-none tracking-[0.3em]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5F6F66] hover:text-[#6B8E23] dark:text-[#AAB7AF] dark:hover:text-white transition-colors"
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
@@ -213,43 +213,43 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3a7af2] py-3 text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-70"
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#6B8E23] hover:bg-[#5A781E] py-4 text-[15px] font-black text-white shadow-xl shadow-[#6B8E23]/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {mode === "signin" ? "Signing in..." : "Creating..."}
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    {mode === "signin" ? "Authenticating..." : "Registering..."}
                   </>
                 ) : (
-                  <>{mode === "signin" ? "Sign In" : "Sign Up"}</>
+                  <>{mode === "signin" ? "Enter Dashboard" : "Create Clinical ID"}</>
                 )}
               </button>
             </form>
 
             {/* Separator exact styling */}
-            <div className="my-5 flex items-center justify-center mx-2">
-              <div className="h-px w-full bg-[#1c2333]" />
-              <span className="px-3 text-[10px] text-slate-500 font-medium">OR</span>
-              <div className="h-px w-full bg-[#1c2333]" />
+            <div className="my-6 flex items-center justify-center px-2">
+              <div className="h-px w-full bg-[#E0E6E2] dark:bg-white/10" />
+              <span className="px-4 text-[11px] text-[#A0ADA6] font-black tracking-widest">OR</span>
+              <div className="h-px w-full bg-[#E0E6E2] dark:bg-white/10" />
             </div>
 
             {/* Social Buttons strictly bordered and transparent */}
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => toast.info("Google login natively enabled in Firebase console.")}
-                className="flex w-full items-center justify-center rounded-xl border border-[#161c29] bg-[#090d16] py-3 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/5 active:scale-[0.98]"
+                onClick={() => toast.info("Google login natively enabled.")}
+                className="flex items-center justify-center rounded-2xl border-2 border-[#E0E6E2] dark:border-white/5 bg-transparent py-3 text-[13px] font-bold text-[#5F6F66] dark:text-[#AAB7AF] transition-all hover:bg-[#6B8E23]/5 active:scale-[0.96]"
               >
-                <GoogleIcon />
-                Continue with Google
+                <div className="mr-2"><GoogleIcon /></div>
+                Google
               </button>
               <button
                 type="button"
-                onClick={() => toast.info("Facebook login natively enabled in Firebase console.")}
-                className="flex w-full items-center justify-center rounded-xl border border-[#161c29] bg-[#090d16] py-3 text-[12px] font-medium text-slate-300 transition-colors hover:bg-white/5 active:scale-[0.98]"
+                onClick={() => toast.info("Facebook login natively enabled.")}
+                className="flex items-center justify-center rounded-2xl border-2 border-[#E0E6E2] dark:border-white/5 bg-transparent py-3 text-[13px] font-bold text-[#5F6F66] dark:text-[#AAB7AF] transition-all hover:bg-[#6B8E23]/5 active:scale-[0.96]"
               >
-                <FacebookIcon />
-                Continue with Facebook
+                <div className="mr-2"><FacebookIcon /></div>
+                Facebook
               </button>
             </div>
           </div>
