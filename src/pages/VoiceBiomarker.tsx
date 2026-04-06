@@ -112,7 +112,7 @@ export default function VoiceBiomarker() {
     formData.append('audio', blob, 'recording.wav');
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
       const response = await fetch(`${baseUrl}/api/vocal-risk`, {
         method: 'POST',
         body: formData,
@@ -122,8 +122,9 @@ export default function VoiceBiomarker() {
 
       const data = await response.json();
       setResults(data);
+      
       setAnalyzed(true);
-      toast.success("Voice analysis complete!");
+      toast.success("Vocal tremor extraction complete!");
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Failed to analyze voice biomarker.");
@@ -170,7 +171,7 @@ export default function VoiceBiomarker() {
           disabled={loading}
           className="px-10 py-4 bg-primary text-white rounded-full font-black italic text-xs uppercase tracking-[0.2em] shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)] border border-white/20 transition-all hover:bg-primary/90 disabled:opacity-50"
         >
-          {loading ? "ANALYZING PATTERNS..." : recording ? "TERMINATE SCAN" : "INITIATE ANALYSIS"}
+          {loading ? "EXTRACTING VOCAL TREMORS..." : recording ? "TERMINATE SCAN" : "INITIATE ANALYSIS"}
         </motion.button>
       </div>
 
@@ -233,9 +234,9 @@ export default function VoiceBiomarker() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
               {[
                 { label: "Confidence", value: `${(results.confidence * 100).toFixed(1)}%`, icon: Zap },
-                { label: "Status", value: results.xaiLabel.split(' ')[0], icon: ShieldCheck },
-                { label: "ML Model", value: "Neural-V3", icon: Layout },
-                { label: "Latency", value: "1.2s", icon: HeartPulse }
+                { label: "Stability", value: results.xaiLabel.split(' ')[1] || 'STABLE', icon: ShieldCheck },
+                { label: "Engine", value: "Biometric-v2", icon: Layout },
+                { label: "Latency", value: results.latency || "1.2s", icon: HeartPulse }
               ].map((r, i) => (
                 <div key={r.label} className="flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -248,11 +249,27 @@ export default function VoiceBiomarker() {
             </div>
 
             <div className={cn(
-              "w-full rounded-2xl p-6 text-center border-t border-b border-primary/20 bg-primary/5",
-              results.xaiLabel.includes('LOW') ? "text-green-400" : "text-yellow-400"
+              "w-full rounded-2xl p-6 text-center border-t border-b border-primary/20 bg-primary/5 mb-8",
+              results.xaiLabel.includes('LOW') ? "text-green-400" : (results.xaiLabel.includes('HIGH') ? "text-red-400" : "text-yellow-400")
             )}>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-2">Stability Outlook</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-2">Vocal Risk Assessment</p>
               <h4 className="text-3xl font-black italic uppercase tracking-tight">{results.xaiLabel}</h4>
+            </div>
+
+            <div className="pt-6 border-t border-white/5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-4">Secondary Biomarkers</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="text-[8px] uppercase font-black text-muted-foreground mb-1">Local Jitter</div>
+                  <div className="text-xl font-black italic text-primary">{(results.jitter * 100).toFixed(3)}%</div>
+                  <div className="text-[8px] uppercase text-muted-foreground mt-1">Micro-frequency instability</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="text-[8px] uppercase font-black text-muted-foreground mb-1">Local Shimmer</div>
+                  <div className="text-xl font-black italic text-primary">{(results.shimmer * 100).toFixed(3)}%</div>
+                  <div className="text-[8px] uppercase text-muted-foreground mt-1">Amplitude micro-variation</div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

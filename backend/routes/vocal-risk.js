@@ -46,39 +46,23 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
                 .save(tempAudioPath);
         });
         
-        // Step 1: Extract embedding
-        console.log('[VOCAL_RISK] Extracting embedding...');
-        const embedding = await runPythonScript(
-            path.join(__dirname, '../utils/audio_to_embeddings.py'),
+        // Use the new vocal_analysis.py script for real acoustic feature extraction
+        console.log('[VOCAL_RISK] Running real acoustic feature extraction...');
+        const result = await runPythonScript(
+            path.join(__dirname, '../utils/vocal_analysis.py'),
             [tempAudioPath]
         );
         
-        // Step 2: Classify
-        console.log('[VOCAL_RISK] Running inference...');
-        const result = await runPythonScript(
-            path.join(__dirname, '../utils/inference.py'),
-            [JSON.stringify(embedding)]
-        );
-        
-        // Step 3: Format response
-        const riskScore = result.risk_score || 0;
-        const confidence = result.confidence || 0;
-        const xaiLabel = riskScore > 0.7 ? '🔴 HIGH RISK' : 
-                         riskScore > 0.5 ? '🟡 MODERATE RISK' : 
-                         '🟢 LOW RISK';
-        
+        console.log('[VOCAL_ENGINE] Analysis complete: ', JSON.stringify(result, null, 2));
+
+        // Format clean response for the frontend
         res.json({
-            riskScore: parseFloat(riskScore.toFixed(3)),
-            confidence: parseFloat(confidence.toFixed(3)),
-            xaiLabel: xaiLabel,
-            features: {
-                model: 'vocadiab-byol-s',
-                embedding_dim: embedding?.length || 0,
-                top_feature_indices: result.top_feature_indices || [],
-                dataset: 'colive-voice-study',
-                reference: 'https://doi.org/10.1038/s41598-023-xxxxx'
-            },
-            timestamp: new Date().toISOString()
+            confidence: result.confidence,
+            xaiLabel: result.xaiLabel,
+            jitter: result.jitter,
+            shimmer: result.shimmer,
+            latency: result.latency,
+            timestamp: result.timestamp
         });
         
     } catch (error) {
