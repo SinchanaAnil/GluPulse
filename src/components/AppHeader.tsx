@@ -1,5 +1,6 @@
 import { Search, Bell, User, Calendar, Dna } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SignOutControl } from "@/components/SignOutControl";
 
 export function AppHeader() {
   return (
@@ -21,6 +22,7 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-4 w-48 justify-end">
+        <SignOutControl variant="header" />
         <button className="text-muted-foreground hover:text-foreground transition-colors">
           <Calendar className="h-5 w-5" />
         </button>

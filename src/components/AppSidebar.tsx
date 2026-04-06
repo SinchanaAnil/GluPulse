@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -26,6 +27,7 @@ const navItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { theme, toggle } = useTheme();
+  const { signOut } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col items-center py-6 gap-2 transition-colors duration-500 sidebar-glass">
@@ -45,6 +47,13 @@ export function AppSidebar() {
               title={item.label}
             >
               <item.icon className="relative z-10 h-5 w-5" />
+              {active && (
+                <motion.div
+                  layoutId="activeSide"
+                  className="absolute -left-[3px] top-1/4 h-1/2 w-[3px] rounded-r-full bg-primary"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
             </Link>
           );
         })}
@@ -69,7 +78,10 @@ export function AppSidebar() {
           </div>
         </button>
 
-        <button className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-white/20 hover:text-foreground transition-all">
+        <button 
+          onClick={() => signOut()}
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-white/20 hover:text-foreground transition-all"
+        >
           <LogOut className="h-5 w-5" />
         </button>
       </div>

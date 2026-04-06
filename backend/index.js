@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import vocalRiskRouter from './routes/vocal-risk.js';
 import chatRouter from './routes/chat.js';
+import reflexRouter from './routes/reflex.js';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 // --- 1. Router-based Routes ---
 app.use('/api', vocalRiskRouter);
 app.use('/api', chatRouter);
+app.use('/api', reflexRouter);
 
 // --- 2. Timeline Data Route (NEW) ---
 app.get('/api/timeline-data', (req, res) => {
