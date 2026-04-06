@@ -1,11 +1,11 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
-  Heart,
-  Dna,
-  Activity,
-  BarChart2,
-  Settings,
+  Mic,
+  Eye,
+  Zap,
+  Clock,
+  MessageCircle,
   Sun,
   Moon,
   LogOut
@@ -16,12 +16,12 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Heart, label: "Vitals", path: "/voice" },
-  { icon: Dna, label: "Genetics", path: "/vision" },
-  { icon: Activity, label: "Dental", path: "/reflex" },
-  { icon: BarChart2, label: "Reports", path: "/timeline" },
-  { icon: Settings, label: "Settings", path: "/chatbot" },
+  { icon: LayoutDashboard, label: "Home", path: "/" },
+  { icon: Mic, label: "Voice", path: "/voice" },
+  { icon: Eye, label: "Vision", path: "/vision" },
+  { icon: Zap, label: "Reflex", path: "/reflex" },
+  { icon: Clock, label: "History", path: "/timeline" },
+  { icon: MessageCircle, label: "AI Chat", path: "/chatbot" },
 ];
 
 export function AppSidebar() {
@@ -31,7 +31,15 @@ export function AppSidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col items-center py-6 gap-2 transition-colors duration-500 sidebar-glass">
-      <nav className="flex flex-1 flex-col items-center gap-6 mt-14">
+      <div className="mb-4">
+        <Link to="/" className="flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full overflow-hidden border border-white/20 bg-white/10 flex items-center justify-center">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+          </div>
+        </Link>
+      </div>
+
+      <nav className="flex flex-1 flex-col items-center gap-6 mt-4">
         {navItems.map((item) => {
           const active = location.pathname === item.path;
           return (
