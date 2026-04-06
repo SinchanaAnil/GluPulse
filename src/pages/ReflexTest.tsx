@@ -9,11 +9,12 @@ const NavLink = ({ label, active }: { label: string; active?: boolean }) => (
   <a href="#" className={cn("text-[10px] font-bold tracking-[0.2em] transition-colors", active ? "text-white" : "text-white/40 hover:text-white/70")}>{label}</a>
 );
 
-const ReflexUnit = ({ title, status, icon: Icon, delay = 0, locked }: { title: string; status: string; icon: any; delay?: number; locked?: boolean }) => (
+const ReflexUnit = ({ title, status, icon: Icon, delay = 0, locked, onClick }: { title: string; status: string; icon: any; delay?: number; locked?: boolean; onClick?: () => void }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ delay }}
+    onClick={onClick}
     className={cn(
       "relative group w-44 h-60 rounded-2xl flex flex-col items-center justify-center gap-4 overflow-hidden border transition-all duration-300",
       locked ? "bg-white/5 border-white/5 grayscale pointer-events-none" : "bg-white/5 border-white/10 hover:border-accent/40 cursor-pointer"
@@ -88,16 +89,75 @@ const HistoryLog = ({ title, date, status, delay = 0 }: { title: string; date: s
 // --- Main Page ---
 
 export default function ReflexTest() {
-  const [gameState, setGameState] = useState<"idle" | "waiting" | "ready" | "result">("idle");
+  const [gameState, setGameState] = useState<"idle" | "waiting" | "ready" | "result" | "analyzing">("idle");
   const [reactionTime, setReactionTime] = useState<number | null>(null);
   const [lastMessage, setLastMessage] = useState("Tap to initiate stability scan.");
+  const [history, setHistory] = useState<any[]>([]);
+  const [roundStats, setRoundStats] = useState<number[]>([]);
+  const [stabilityXP, setStabilityXP] = useState(11240);
+  
   const startTime = useRef<number>(0);
   const timeoutRef = useRef<any>(null);
 
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/reflex/history');
+      const data = await res.json();
+      setHistory(data);
+      
+      // Update dynamic XP/Rank based on performance
+      if (data.length > 0) {
+        const avgScores = data.slice(0, 3).reduce((acc: number, curr: any) => acc + curr.neuroScore, 0) / Math.min(3, data.length);
+        setStabilityXP(Math.round(11000 + (avgScores * 10)));
+      }
+    } catch (err) {
+      console.error("Failed to fetch history:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const saveResult = async (stats: number[]) => {
+    const mean = stats.reduce((a, b) => a + b, 0) / stats.length;
+    setReactionTime(Math.round(mean));
+    setGameState("analyzing");
+    setLastMessage("UPLOADING NEURAL TELEMETRY...");
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/reflex/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meanLatency: Math.round(mean),
+          stabilityIndex: 0.95 - (Math.abs(300 - mean) / 1000), // Simple simulated index
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (response.ok) {
+        await fetchHistory();
+        setGameState("result");
+        if (mean < 300) setLastMessage("STATUS: OPTIMAL. Metabolic balance confirmed.");
+        else if (mean < 500) setLastMessage("STATUS: FAIR. Minimal glucose-induced lag detected.");
+        else setLastMessage("STATUS: CRITICAL! Severe reflex impediment. Check levels!");
+      }
+    } catch (err) {
+      console.error("Save failure:", err);
+      setGameState("result");
+    }
+  };
+
   const startTest = () => {
+    setRoundStats([]);
+    initiateRound(1);
+  };
+
+  const initiateRound = (roundNum: number) => {
     setGameState("waiting");
-    setLastMessage("Synchronizing neural pathways... Wait for signal.");
-    const delay = 1500 + Math.random() * 3000;
+    setLastMessage(`Round ${roundNum}/5: Synchronizing neural pathways...`);
+    const delay = 1000 + Math.random() * 2500;
     timeoutRef.current = setTimeout(() => {
       startTime.current = Date.now();
       setGameState("ready");
@@ -108,12 +168,16 @@ export default function ReflexTest() {
   const handleTap = () => {
     if (gameState === "ready") {
       const time = Date.now() - startTime.current;
-      setReactionTime(time);
-      setGameState("result");
+      const newStats = [...roundStats, time];
+      setRoundStats(newStats);
       
-      if (time < 300) setLastMessage("STATUS: OPTIMAL. Metabolic balance confirmed.");
-      else if (time < 500) setLastMessage("STATUS: FAIR. Minimal glucose-induced lag detected.");
-      else setLastMessage("STATUS: CRITICAL! Severe reflex impediment. Check levels!");
+      if (newStats.length < 5) {
+        setGameState("waiting");
+        setLastMessage(`Recorded: ${time}ms. Preparing next round...`);
+        setTimeout(() => initiateRound(newStats.length + 1), 800);
+      } else {
+        saveResult(newStats);
+      }
     } else if (gameState === "waiting") {
       clearTimeout(timeoutRef.current);
       setGameState("idle");
@@ -154,7 +218,7 @@ export default function ReflexTest() {
         {/* Left Side: Performance Hub */}
         <div className="col-span-12 xl:col-span-7 pl-12 pr-6 pb-24 relative">
           
-          <div className="mt-8 relative z-20">
+          <div className="mt-8 relative z-50 pointer-events-auto">
             <p className="text-[10px] font-black text-accent uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
               <Zap className="w-3 h-3" /> NEURO-GLYCO MAPPING ACTIVE
             </p>
@@ -166,9 +230,9 @@ export default function ReflexTest() {
             </p>
           </div>
 
-          <div className="mt-16 flex gap-6 items-center relative z-20">
+          <div className="mt-16 flex gap-6 items-center relative z-50 pointer-events-auto">
             <AnimatePresence mode="wait">
-              {gameState === "idle" || gameState === "result" ? (
+              {gameState === "idle" || gameState === "result" || gameState === "analyzing" ? (
                 <motion.div
                   key="game-idle"
                   initial={{ opacity: 0, x: -20 }}
@@ -178,8 +242,8 @@ export default function ReflexTest() {
                 >
                    <ReflexUnit 
                      onClick={startTest} 
-                     title={gameState === "result" ? `LAST: ${reactionTime}ms` : "INITIATE SCAN"} 
-                     status={gameState === "result" ? "RESET TEST" : "Stability Test"} 
+                     title={gameState === "result" || gameState === "analyzing" ? `SCORE: ${reactionTime}ms` : "INITIATE SCAN"} 
+                     status={gameState === "result" ? "RESET TEST" : gameState === "analyzing" ? "PROCESSING..." : "Stability Test"} 
                      icon={Zap} 
                    />
                    <ReflexUnit title="NEURAL PATH" status="Level 02 Required" icon={Shield} locked />
@@ -225,11 +289,11 @@ export default function ReflexTest() {
           <div className="mt-16 flex items-end gap-12 relative z-20">
             <div className="flex flex-col gap-1">
                <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Stability XP</span>
-               <span className="text-4xl font-black text-accent italic">11,240</span>
+               <span className="text-4xl font-black text-accent italic">{stabilityXP.toLocaleString()}</span>
             </div>
             <div className="flex flex-col gap-1">
                <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Patient Rank</span>
-               <span className="text-4xl font-black text-white/20 italic uppercase tracking-widest">RANK: 04</span>
+               <span className="text-4xl font-black text-white/20 italic uppercase tracking-widest">RANK: 0{Math.floor(stabilityXP / 3000)}</span>
             </div>
             <div className="ml-auto flex flex-col items-end gap-3 translate-y-[-10px]">
                <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.3em]">{lastMessage}</p>
@@ -245,12 +309,12 @@ export default function ReflexTest() {
             </div>
           </div>
 
-          {/* Zigzag Bottom Left Overlay (White Zone) */}
+          {/* Zigzag Bottom Left Overlay (White Zone) - Fixed to prevent blocking */}
           <div 
-            className="absolute bottom-0 left-0 w-full h-[450px] bg-white z-30"
+            className="absolute bottom-0 left-0 w-full h-[450px] bg-white z-10 pointer-events-none"
             style={{ clipPath: 'polygon(0 80px, 80px 0, 100% 0, 100% 100%, 0 100%)' }}
           >
-             <div className="p-12 h-full flex flex-col justify-end gap-10">
+             <div className="p-12 h-full flex flex-col justify-end gap-10 pointer-events-auto">
                 <div className="flex gap-4">
                    <button className="px-8 py-2.5 bg-black text-white text-[10px] font-black rounded-full italic uppercase tracking-[0.2em] shadow-lg hover:scale-105 transition-transform">Stability Sync</button>
                    <button className="px-8 py-2.5 bg-black/5 text-black/30 text-[10px] font-black rounded-full italic uppercase tracking-[0.2em] hover:bg-black/10 transition-colors">Neural Path</button>
@@ -276,7 +340,7 @@ export default function ReflexTest() {
           
           {/* Top Zigzag (Light Gray Section) */}
           <div 
-            className="absolute top-0 right-0 w-full h-[65%] bg-[#F9F9FB] z-0"
+            className="absolute top-0 right-0 w-full h-[65%] bg-[#F9F9FB] z-0 pointer-events-none"
             style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)' }}
           />
           
@@ -295,22 +359,27 @@ export default function ReflexTest() {
                    <span className="text-[9px] font-black text-black/30 uppercase tracking-widest cursor-pointer hover:text-black transition-colors">View All</span>
                 </div>
                 <div className="grid grid-cols-2 gap-6">
-                   <HistoryLog title="SYNC SCAN COMPLETED" date="AUG 21, 10:24" status="STABLE" delay={0.4} />
-                   <HistoryLog title="DRIFT DETECTED" date="AUG 20, 22:15" status="CAUTION" delay={0.5} />
-                   <HistoryLog title="NIGHT SCAN" date="AUG 20, 03:00" status="STABLE" delay={0.6} />
-                   <HistoryLog title="REFLEX SPIKE" date="AUG 19, 14:30" status="STABLE" delay={0.7} />
+                   {history.map((log, i) => (
+                      <HistoryLog 
+                        key={log.id} 
+                        title={`${log.status} SCAN`} 
+                        date={new Date(log.timestamp).toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })} 
+                        status={log.status} 
+                        delay={0.4 + (i * 0.1)} 
+                      />
+                   ))}
                 </div>
              </div>
           </div>
 
-          {/* Bottom Zigzag (Dark Wallet Section) */}
+          {/* Bottom Zigzag (Dark Wallet Section) - Calibrated Z-Index */}
           <div 
-            className="absolute bottom-0 right-0 w-[115%] h-[38%] bg-[#0B0610] z-40 border-t border-accent/20"
+            className="absolute bottom-0 right-0 w-[115%] h-[42%] bg-[#0B0610] z-20 border-t border-accent/20 pointer-events-none"
             style={{ clipPath: 'polygon(8% 0, 100% 0, 100% 100%, 0 100%)' }}
           >
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
              
-             <div className="relative p-12 flex flex-col h-full justify-center gap-6">
+             <div className="relative p-12 flex flex-col h-full justify-center gap-6 pointer-events-auto">
                 <div className="flex justify-between items-center">
                    <h2 className="text-3xl font-black italic tracking-tighter text-white leading-[0.9] uppercase max-w-[280px]">
                       METABOLIC WALLET:<br/>ANALYTICS VAULT
