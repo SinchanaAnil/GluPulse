@@ -1,7 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const twilio = require('twilio');
+import express from 'express';
+import twilio from 'twilio';
 
+const router = express.Router();
+
+// Twilio client initialized with environment variables
 const client = twilio(
     process.env.TWILIO_SID,
     process.env.TWILIO_TOKEN
@@ -52,4 +54,4 @@ router.post('/call', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
