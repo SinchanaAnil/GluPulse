@@ -46,6 +46,8 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
                 .save(tempAudioPath);
         });
         
+        const gender = req.body.gender || 'female';
+        
         // Use the new vocal_analysis.py script for real acoustic feature extraction
         console.log('[VOCAL_RISK] Running real acoustic feature extraction...');
         const result = await runPythonScript(
@@ -55,6 +57,19 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
         
         console.log('[VOCAL_ENGINE] Analysis complete: ', JSON.stringify(result, null, 2));
 
+        // Use audio_to_embeddings.py and inference.py to get SHAP style contributions and gender classification
+        console.log('[VOCAL_RISK] Running embeddings extraction...');
+        const embedding = await runPythonScript(
+            path.join(__dirname, '../utils/audio_to_embeddings.py'),
+            [tempAudioPath]
+        );
+        
+        console.log('[VOCAL_RISK] Running gender-stratified inference...');
+        const inferenceResult = await runPythonScript(
+            path.join(__dirname, '../utils/inference.py'),
+            [JSON.stringify(embedding), gender]
+        );
+
         // Format clean response for the frontend
         res.json({
             confidence: result.confidence,
@@ -62,7 +77,9 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
             jitter: result.jitter,
             shimmer: result.shimmer,
             latency: result.latency,
-            timestamp: result.timestamp
+            timestamp: result.timestamp,
+            classifier_used: inferenceResult.classifier_used,
+            shapContributions: inferenceResult.shapContributions
         });
         
     } catch (error) {

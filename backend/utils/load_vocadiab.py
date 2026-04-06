@@ -41,13 +41,6 @@ def load_and_prepare_data():
     male_df = pd.read_pickle(male_path)
     female_df = pd.read_pickle(female_path)
     
-    # These are likely pandas DataFrames with columns:
-    # - embeddings (or features): 512-dimensional Byol-S vectors
-    # - age: age of participant
-    # - bmi: body mass index
-    # - gender: male/female (redundant here since already split)
-    # - ada_score or diabetes_label: target variable
-    
     print(f"Male data shape: {male_df.shape}")
     print(f"Female data shape: {female_df.shape}")
     print(f"Male columns: {male_df.columns.tolist()}")
@@ -76,22 +69,10 @@ def load_and_prepare_data():
     X_female = np.array([np.array(x) for x in female_df[embedding_col].values])
     y_female = female_df[target_col].values
     
-    # Combine datasets
-    X = np.vstack([X_male, X_female])
-    y = np.hstack([y_male, y_female])
-    
-    print(f"\n✅ Combined dataset:")
-    print(f"   Samples: {X.shape[0]}")
-    print(f"   Features: {X.shape[1]}")
-    print(f"   Classes: {np.unique(y)}")
-    print(f"   Class distribution: {np.bincount(y.astype(int))}")
-    
-    return X, y, male_df, female_df
+    return X_male, y_male, X_female, y_female, male_df, female_df
 
-def train_vocadiab_classifier(X, y, output_dir='./models'):
+def train_vocadiab_classifier(X, y, clf_filename, scaler_filename, output_dir='./models'):
     """Train RandomForest on embeddings"""
-    
-    print("\nTraining RandomForest classifier...")
     
     os.makedirs(output_dir, exist_ok=True)
     
@@ -117,8 +98,8 @@ def train_vocadiab_classifier(X, y, output_dir='./models'):
     print(f"✅ Training accuracy: {train_score:.3f}")
     
     # Save
-    clf_path = os.path.join(output_dir, 'vocadiab_classifier.pkl')
-    scaler_path = os.path.join(output_dir, 'vocadiab_scaler.pkl')
+    clf_path = os.path.join(output_dir, clf_filename)
+    scaler_path = os.path.join(output_dir, scaler_filename)
     
     joblib.dump(clf, clf_path)
     joblib.dump(scaler, scaler_path)
@@ -129,13 +110,11 @@ def train_vocadiab_classifier(X, y, output_dir='./models'):
     return clf, scaler
 
 if __name__ == '__main__':
-    # Load data
-    X, y, male_df, female_df = load_and_prepare_data()
-    
-    # Train model
-    clf, scaler = train_vocadiab_classifier(X, y)
-    
-    print("\n" + "=" * 60)
-    print("✅ MODEL TRAINING COMPLETE")
-    print("=" * 60)
-    print("Next: Use backend/utils/inference.py for predictions")
+    X_male, y_male, X_female, y_female, male_df, female_df = load_and_prepare_data()
+    print('\nTraining Male RandomForest classifier...')
+    train_vocadiab_classifier(X_male, y_male, 'model_male.pkl', 'scaler_male.pkl')
+    print('\nTraining Female RandomForest classifier...')
+    train_vocadiab_classifier(X_female, y_female, 'model_female.pkl', 'scaler_female.pkl')
+    print('\n' + '=' * 60)
+    print('✅ MODEL TRAINING COMPLETE')
+    print('=' * 60)

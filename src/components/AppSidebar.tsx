@@ -1,21 +1,13 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
-<<<<<<< HEAD
-  Heart,
-  Dna,
-  Activity,
-  BarChart2,
-  Settings,
-  User,
-  ShieldCheck,
-=======
   Mic,
   Eye,
   Zap,
   Clock,
+  User,
+  ShieldCheck,
   MessageCircle,
->>>>>>> c2125e92a0936bf1998098f1a1406c4005479e66
   Sun,
   Moon,
   LogOut
@@ -26,23 +18,14 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-<<<<<<< HEAD
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Heart, label: "Vitals", path: "/voice" },
-  { icon: Dna, label: "Genetics", path: "/vision" },
-  { icon: Activity, label: "Reflex", path: "/reflex" },
-  { icon: BarChart2, label: "Timeline", path: "/timeline" },
+  { icon: Mic, label: "Voice Biomarker", path: "/voice" },
+  { icon: Eye, label: "Vision Center", path: "/vision" },
+  { icon: Zap, label: "Reflex Test", path: "/reflex" },
+  { icon: Clock, label: "Health Timeline", path: "/timeline" },
   { icon: User, label: "Profile", path: "/profile" },
   { icon: ShieldCheck, label: "Physician Vault", path: "/physician" },
-  { icon: Settings, label: "Settings", path: "/chatbot" },
-=======
-  { icon: LayoutDashboard, label: "Home", path: "/" },
-  { icon: Mic, label: "Voice", path: "/voice" },
-  { icon: Eye, label: "Vision", path: "/vision" },
-  { icon: Zap, label: "Reflex", path: "/reflex" },
-  { icon: Clock, label: "History", path: "/timeline" },
-  { icon: MessageCircle, label: "AI Chat", path: "/chatbot" },
->>>>>>> c2125e92a0936bf1998098f1a1406c4005479e66
+  { icon: MessageCircle, label: "AI Health Chat", path: "/chatbot" },
 ];
 
 export function AppSidebar() {

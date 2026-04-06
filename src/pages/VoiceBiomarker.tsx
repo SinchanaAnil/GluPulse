@@ -1,13 +1,13 @@
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Mic, MicOff, BarChart3, Loader2, Zap, Layout, ShieldCheck, HeartPulse } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const stagger = { animate: { transition: { staggerChildren: 0.1 } } };
-const fadeUp = {
+const stagger: Variants = { animate: { transition: { staggerChildren: 0.1 } } };
+const fadeUp: Variants = {
   initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
 const FeatureItem = ({ icon: Icon, title, description, delay = 0 }: { icon: any; title: string; description: string; delay?: number }) => (
@@ -106,10 +106,13 @@ export default function VoiceBiomarker() {
     }
   };
 
+  const [gender, setGender] = useState<"male" | "female">("female");
+  
   const handleUpload = async (blob: Blob) => {
     setLoading(true);
     const formData = new FormData();
     formData.append('audio', blob, 'recording.wav');
+    formData.append('gender', gender);
 
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
@@ -162,6 +165,23 @@ export default function VoiceBiomarker() {
         >
           Pioneering research in neuro-cognitive diagnostics using vocal micro-tremors and AI analysis
         </motion.p>
+        
+        <motion.div variants={fadeUp} className="flex gap-4 mb-8">
+          {["female", "male"].map((g) => (
+            <button
+              key={g}
+              onClick={() => setGender(g as any)}
+              className={cn(
+                "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                gender === g 
+                  ? "bg-primary border-primary text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)]" 
+                  : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20"
+              )}
+            >
+              {g}
+            </button>
+          ))}
+        </motion.div>
         
         <motion.button
           variants={fadeUp}
@@ -255,6 +275,41 @@ export default function VoiceBiomarker() {
               <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-2">Vocal Risk Assessment</p>
               <h4 className="text-3xl font-black italic uppercase tracking-tight">{results.xaiLabel}</h4>
             </div>
+
+            {results.shapContributions && results.shapContributions.length > 0 && (
+              <div className="mb-8 w-full border border-white/5 bg-black/20 rounded-2xl p-6">
+                <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground mb-6 opacity-60 text-center">
+                  Classified using: {results.classifier_used || "Standard classifier"}
+                </p>
+                <div className="flex flex-col gap-4">
+                  {results.shapContributions.map((shap: any, idx: number) => {
+                    // Calculate percentage width (clamping to max 100%)
+                    const pct = Math.min(100, Math.floor((shap.value / 0.35) * 100));
+                    return (
+                      <div key={idx} className="flex items-center gap-4 w-full group">
+                        <div className="w-[110px] text-right text-[9px] uppercase font-bold text-muted-foreground/80 whitespace-nowrap overflow-hidden text-ellipsis group-hover:text-foreground transition-colors shrink-0">
+                          {shap.label}
+                        </div>
+                        <div className="flex-1 h-2 bg-white/5 rounded-full relative overflow-hidden backdrop-blur-sm">
+                          <motion.div 
+                            className={cn(
+                              "absolute top-0 bottom-0 left-0 rounded-full", 
+                              shap.direction === "risk" ? "bg-red-500/80 shadow-[0_0_10px_rgba(239,68,68,0.5)]" : "bg-green-500/80 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                            )}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 1.2, delay: 0.2 + idx * 0.1, ease: "easeOut" }}
+                          />
+                        </div>
+                        <div className="w-[45px] text-right text-[10px] font-black text-foreground shrink-0 tabular-nums">
+                          {shap.value > 0 ? "+" : ""}{shap.value.toFixed(3)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="pt-6 border-t border-white/5">
               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-4">Secondary Biomarkers</p>
