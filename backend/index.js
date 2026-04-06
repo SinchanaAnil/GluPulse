@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import vocalRiskRouter from './routes/vocal-risk.js';
 import chatRouter from './routes/chat.js';
 import reflexRouter from './routes/reflex.js';
+import sosRouter from './routes/sos.js'; // <-- Converted to ES6 import
 
 dotenv.config();
 
@@ -18,16 +19,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', vocalRiskRouter);
 app.use('/api', chatRouter);
 app.use('/api', reflexRouter);
+app.use('/api/sos', sosRouter); // <-- Added SOS router here
 
 // --- 2. Emergency Response API (Mock) ---
 app.post('/api/emergency/send-email', (req, res) => {
     const { userName, payload } = req.body;
     console.log(`[EMERGENCY_ALERT] Sending SOS for ${userName} to Physician/Guardian...`);
     console.log(`[PAYLOAD]`, payload);
-    
+
     // Simulate latency/success
-    res.json({ 
-        status: 'SOS Broadcast Dispatched', 
+    res.json({
+        status: 'SOS Broadcast Dispatched',
         timestamp: new Date(),
         target: 'Dr. Smith & Guardian'
     });
@@ -55,7 +57,7 @@ app.get('/api/timeline-data', (req, res) => {
     });
 });
 
-// --- 3. Food Scan Route ---
+// --- 4. Food Scan Route ---
 app.post('/api/food-scan', async (req, res) => {
     const { imageBase64, mimeType = 'image/jpeg' } = req.body;
     console.log('Food scan hit, mimeType:', mimeType, 'base64 length:', imageBase64?.length);
@@ -106,7 +108,7 @@ app.post('/api/food-scan', async (req, res) => {
     }
 });
 
-// --- 4. System Status ---
+// --- 5. System Status ---
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date(), project: 'GluPulse' });
 });

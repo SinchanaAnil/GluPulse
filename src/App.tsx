@@ -18,6 +18,7 @@ import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
 import Landing from "@/pages/Landing";
+import { EmergencyOrchestrator } from "@/components/EmergencyOrchestrator";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
+        <EmergencyOrchestrator />
         <TooltipProvider>
           <Toaster />
           <Sonner />

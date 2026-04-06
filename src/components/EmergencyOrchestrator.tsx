@@ -1,207 +1,230 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ShieldAlert, Activity, Clock, Volume2, Send, Loader2, Satellite } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { triggerFullSOS } from "../utils/sosDispatcher";
+import { cn } from "@/lib/utils";
 
-export function EmergencyOrchestrator() {
-  const [isEmergencyArmed, setIsEmergencyArmed] = useState(false);
-  const [countdown, setCountdown] = useState(15);
-  const [isTriggered, setIsTriggered] = useState(false);
-  const [isBroadcasted, setIsBroadcasted] = useState(false);
-  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
-  const timerRef = useRef<any>(null);
+const COUNTDOWN_INITIAL = 15;
+const COOLDOWN_MS = 2 * 60 * 1000;
 
-  // 1. Zero-Friction Dispatch (The 'Stealth' Protocol)
-  const dispatchToCloud = useCallback(async () => {
-    const lastSession = JSON.parse(localStorage.getItem("lastReflexSession") || '{"meanLatency": 0}');
-    
+export const EmergencyOrchestrator = () => {
+  const [isArmed, setIsArmed] = useState(false);
+  const [countdown, setCountdown] = useState(COUNTDOWN_INITIAL);
+  const [sosSent, setSosSent] = useState(false);
+  const [manualToastVisible, setManualToastVisible] = useState(false);
+  
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  const checkStatus = () => {
+    // Cooldown check (2 mins)
+    const lastSos = localStorage.getItem("sosCooldown");
+    if (lastSos && Date.now() - parseInt(lastSos) < COOLDOWN_MS) return;
+
+    const sessionStr = localStorage.getItem("lastReflexSession");
+    if (!sessionStr) return;
+
     try {
-      // Critical: mode: 'no-cors' for demo stability
-      await fetch('https://webhook.site/1c55d61f-4088-436b-9277-bce88d991893', { 
-        method: 'POST', 
-        mode: 'no-cors', 
-        body: JSON.stringify({
-          patient: localStorage.getItem('user_name') || 'Srisha Prajwal',
-          event: 'NEUROGLYCOPENIC_SHOCK_DETECTED',
-          metrics: { latency: lastSession.meanLatency, status: 'UNRESPONSIVE' },
-          location: '13.0694° N, 77.5617° E (BMSIT Campus)',
-          timestamp: new Date().toISOString()
-        }) 
-      });
-      setIsBroadcasted(true);
-      console.log('SENTINEL: Data Broadcasted to Emergency Bridge.');
-    } catch (err) {
-      console.error('SENTINEL: Broadcast Failed', err);
-    }
-  }, []);
-
-  // 2. Emergency Dispatch Voice (Shouting for the judges)
-  const triggerVoiceBot = useCallback((name: string, email: string) => {
-    if (!('speechSynthesis' in window)) return;
-    
-    // Ensure no overlapping voices
-    window.speechSynthesis.cancel();
-    
-    const script = `EMERGENCY! EMERGENCY! THIS IS THE GLU-PULSE SENTINEL. USER ${name?.toUpperCase() || 'SRISHA PRAJWAL'} IS NON-RESPONSIVE! NEURO-GLYCOPENIC SHOCK DETECTED. DISPATCHING BIO-METRIC PROFILE TO MEDICAL UPLINK. B.M.S.I.T. CAMPUS LOCATION BROADCASTED!`;
-    
-    const utterance = new SpeechSynthesisUtterance(script);
-    utterance.pitch = 1.1; 
-    utterance.rate = 0.9;
-    utterance.volume = 1.0;
-    window.speechSynthesis.speak(utterance);
-  }, []);
-
-  // Countdown Logic
-  useEffect(() => {
-    if (isEmergencyArmed && countdown > 0) {
-      timerRef.current = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    } else if (countdown === 0 && !isTriggered) {
-      setIsTriggered(true);
-      const profile = JSON.parse(localStorage.getItem("gluPulseProfile") || '{}');
-      
-      dispatchToCloud();
-      triggerVoiceBot(profile.fullName, profile.physicianEmail);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [isEmergencyArmed, countdown, isTriggered, dispatchToCloud, triggerVoiceBot]);
-
-  // Status Monitoring
-  useEffect(() => {
-    const checkStatus = () => {
-      if (Date.now() < cooldownUntil) return;
-
-      const lastSession = localStorage.getItem("lastReflexSession");
-      if (lastSession) {
-        const data = JSON.parse(lastSession);
-        if (data.status === 'CRITICAL' && !data.handled && !isEmergencyArmed && !isTriggered) {
-          if (data.meanLatency > 1000) {
-            setIsEmergencyArmed(true);
-          }
-        }
+      const session = JSON.parse(sessionStr);
+      if (session.status === "CRITICAL" && session.meanLatency > 1000) {
+        console.log("[EMERGENCY ORCHESTRATOR] 🚨 ARMING THE DEADMAN SWITCH");
+        setIsArmed(true);
       }
-    };
-
-    const interval = setInterval(checkStatus, 2000);
-    return () => clearInterval(interval);
-  }, [isEmergencyArmed, isTriggered, cooldownUntil]);
-
-  const resetFailSafe = () => {
-    clearInterval(timerRef.current);
-    setIsEmergencyArmed(false);
-    setIsTriggered(false);
-    setIsBroadcasted(false);
-    setCountdown(15);
-    window.speechSynthesis.cancel();
-
-    const lastSession = localStorage.getItem("lastReflexSession");
-    if (lastSession) {
-      const data = JSON.parse(lastSession);
-      localStorage.setItem("lastReflexSession", JSON.stringify({ ...data, handled: true, status: 'STABLE' }));
+    } catch (e) {
+      console.error("Failed to parse reflex session", e);
     }
-
-    setCooldownUntil(Date.now() + 120000);
-    window.location.reload(); 
   };
 
-  return (
-    <AnimatePresence>
-      {isEmergencyArmed && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] bg-rose-950/95 backdrop-blur-3xl flex items-center justify-center p-6"
+  useEffect(() => {
+    // 1. Initial check upon opening the app
+    checkStatus();
+
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    // 2. Countdown logic when armed
+    if (isArmed && countdown > 0 && !sosSent) {
+      countdownRef.current = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (countdown === 0 && !sosSent) {
+      handleAutonomousTrigger();
+    }
+
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [isArmed, countdown, sosSent]);
+
+  const handleResponsive = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    
+    // Clear overlay state
+    setIsArmed(false);
+    setCountdown(COUNTDOWN_INITIAL);
+    setSosSent(false);
+    
+    // As per user request: Trigger one last time after 10 seconds delay
+    console.log("[EMERGENCY ORCHESTRATOR] Responsive. Scheduling final check in 10s...");
+    setTimeout(() => {
+      checkStatus();
+    }, 10000);
+  };
+
+  const handleAutonomousTrigger = async () => {
+    const profileStr = localStorage.getItem("userProfile");
+    const sessionStr = localStorage.getItem("lastReflexSession");
+    
+    let patientName = "Unknown Patient";
+    let meanLatency = 0;
+
+    try {
+      if (profileStr) patientName = JSON.parse(profileStr).patientName || patientName;
+      if (sessionStr) meanLatency = JSON.parse(sessionStr).meanLatency || 0;
+    } catch (e) {}
+
+    setSosSent(true);
+    localStorage.setItem("sosCooldown", Date.now().toString());
+
+    await triggerFullSOS({
+      patientName,
+      latencyMs: meanLatency,
+      status: "NEUROGLYCOPENIC_SHOCK_DETECTED",
+    });
+
+    // Voice Alert
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(
+      `Emergency alert. ${patientName} is unresponsive at BMSIT Campus. SOS has been dispatched.`
+    );
+    utterance.rate = 0.85;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleManualSOS = async () => {
+    const profileStr = localStorage.getItem("userProfile");
+    const sessionStr = localStorage.getItem("lastReflexSession");
+    
+    let patientName = "Unknown Patient";
+    let meanLatency = 0;
+
+    try {
+      if (profileStr) patientName = JSON.parse(profileStr).patientName || patientName;
+      if (sessionStr) meanLatency = JSON.parse(sessionStr).meanLatency || 0;
+    } catch (e) {}
+
+    setManualToastVisible(true);
+    setTimeout(() => setManualToastVisible(false), 3000);
+
+    triggerFullSOS({
+      patientName,
+      latencyMs: meanLatency,
+      status: "MANUAL_SOS_BROADCAST",
+    });
+  };
+
+  if (!isArmed) {
+    return (
+      <>
+        {/* Manual Broadcast SOS Button - Fixed Bottom-Right */}
+        <button
+          onClick={handleManualSOS}
+          className="fixed bottom-6 right-6 z-[45] bg-red-600 hover:bg-red-700 text-white font-black italic text-[10px] uppercase tracking-widest px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-white/20 transition-all hover:scale-105 active:scale-95"
         >
-          <div className="max-w-xl w-full bg-zinc-950 border-4 border-rose-600 rounded-[3rem] p-12 shadow-[0_0_150px_rgba(225,29,72,0.5)] text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,29,72,0.1),transparent)] animate-pulse" />
-            
-            <ShieldAlert className="w-24 h-24 text-rose-600 mx-auto mb-8 animate-bounce" />
-            
-            <h2 className="text-5xl font-black italic uppercase text-white tracking-tighter mb-4">
-              {isBroadcasted ? "SOS DISPATCHED" : (isTriggered ? "BROADCASTING" : "BIO-HAZARD")}
-            </h2>
-            
-            <p className="text-rose-200/60 font-bold uppercase tracking-widest text-[11px] mb-12 leading-relaxed">
-              {isBroadcasted 
-                ? "SOS PACKET BROADCASTED. WAITING FOR PHYSICIAN HANDSHAKE..."
-                : (isTriggered 
-                  ? "Stealth medical broadcast active. SOS biological packet being broadasted via background service."
-                  : "Critical physiological collapse detected. Confirm responsiveness to abort background emergency bridge.")}
-            </p>
+          <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+          Broadcast SOS
+        </button>
 
-            <div className="flex flex-col items-center gap-10">
-               {!isTriggered && (
-                 <div className="relative w-44 h-44 flex items-center justify-center">
-                    <svg className="w-full h-full -rotate-90">
-                       <circle cx="88" cy="88" r="78" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
-                       <motion.circle 
-                         cx="88" cy="88" r="78" 
-                         fill="none" 
-                         stroke="#E11D48" 
-                         strokeWidth="10" 
-                         strokeLinecap="round"
-                         initial={{ strokeDasharray: "490 490" }}
-                         animate={{ strokeDasharray: `${(countdown/15) * 490} 490` }}
-                         transition={{ duration: 1, ease: "linear" }}
-                       />
-                    </svg>
-                    <span className="absolute text-7xl font-black italic text-white tabular-nums drop-shadow-lg">{countdown}</span>
-                 </div>
-               )}
-
-               {isTriggered ? (
-                 <div className="space-y-8 w-full">
-                    <div className="flex flex-col gap-4">
-                       <div className="bg-rose-500/10 border border-rose-500/20 p-6 rounded-3xl flex items-center gap-6">
-                          {isBroadcasted ? <Satellite className="w-8 h-8 text-rose-500 animate-pulse" /> : <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />}
-                          <div className="text-left">
-                             <p className="text-[10px] font-black uppercase text-rose-200 tracking-widest">Medical Bridge {isBroadcasted ? 'Confirmed' : 'Active'}</p>
-                             <p className="text-[12px] font-bold text-white uppercase italic">{isBroadcasted ? 'Uplink Established' : 'Silent Webhook Dispatching...'}</p>
-                          </div>
-                       </div>
-                       
-                       <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ width: "0%" }}
-                            animate={{ width: "100%" }}
-                            transition={{ duration: 3, repeat: isBroadcasted ? 0 : Infinity }}
-                            className="h-full bg-rose-500"
-                          />
-                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="bg-zinc-900 border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-2">
-                          <Send className="w-4 h-4 text-rose-500" />
-                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Satellite Uplink</span>
-                       </div>
-                       <div className="bg-zinc-900 border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-2">
-                          <Volume2 className="w-4 h-4 text-rose-500" />
-                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Vocal Emergency</span>
-                       </div>
-                    </div>
-
-                    <button 
-                      onClick={resetFailSafe}
-                      className="w-full py-6 bg-emerald-600 text-white font-black italic uppercase tracking-[0.2em] rounded-3xl hover:bg-emerald-500 transition-all shadow-xl"
-                    >
-                      I AM RESPONSIVE
-                    </button>
-                 </div>
-               ) : (
-                 <button 
-                    onClick={resetFailSafe}
-                    className="group relative px-20 py-10 bg-white text-zinc-950 font-black italic text-3xl uppercase tracking-[0.2em] rounded-[2rem] overflow-hidden hover:scale-105 active:scale-95 transition-all shadow-[0_20px_60px_rgba(255,255,255,0.2)]"
-                 >
-                    <div className="absolute inset-0 bg-emerald-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                    <span className="relative z-10">I AM RESPONSIVE</span>
-                 </button>
-               )}
-            </div>
+        {manualToastVisible && (
+          <div className="fixed bottom-20 right-6 z-50 bg-black/80 backdrop-blur-md border border-red-500/50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-4">
+            SOS Dispatched ✅
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </>
+    );
+  }
+
+  // Deadman Switch Overlay
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center select-none overflow-hidden">
+      {/* Radial Countdown Timer Backdrop */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden flex items-center justify-center">
+        <div 
+          className="w-[200vw] h-[200vw] transition-all duration-1000 ease-linear"
+          style={{ 
+            background: `conic-gradient(from 0deg, #ef4444 ${(countdown / COUNTDOWN_INITIAL) * 100}%, transparent 0)` 
+          }} 
+        />
+      </div>
+
+      {/* Main Alert Content */}
+      <div className="relative z-10 max-w-lg w-full flex flex-col items-center gap-6">
+        <div className="w-32 h-32 rounded-full border-2 border-red-500/20 flex items-center justify-center relative bg-black/40 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+          <svg className="absolute inset-0 w-full h-full -rotate-90">
+            <circle
+              cx="64"
+              cy="64"
+              r="60"
+              fill="transparent"
+              stroke="white"
+              strokeOpacity="0.05"
+              strokeWidth="4"
+            />
+            <motion.circle
+              cx="64"
+              cy="64"
+              r="60"
+              fill="transparent"
+              stroke="#ef4444"
+              strokeWidth="4"
+              strokeDasharray="377"
+              animate={{ strokeDashoffset: 377 - (377 * countdown) / COUNTDOWN_INITIAL }}
+              transition={{ duration: 1, ease: "linear" }}
+            />
+          </svg>
+          <span className="text-5xl font-black italic text-red-500 tabular-nums drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+            {countdown}
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.5)]">
+            ⚠️ Critical Alert Detected
+          </h2>
+          <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs leading-relaxed max-w-sm mx-auto">
+            Neural latency threshold exceeded.<br/>Emergency protocol arming...
+          </p>
+        </div>
+
+        {!sosSent ? (
+          <>
+            <button
+              onClick={handleResponsive}
+              className="mt-8 px-12 py-5 bg-green-500 hover:bg-green-600 text-white rounded-full font-black italic text-sm uppercase tracking-[0.2em] shadow-[0_20px_50px_rgba(34,197,94,0.3)] border border-white/20 transition-all hover:scale-105 active:scale-95"
+            >
+              ✅ I Am Responsive
+            </button>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              Auto-dispatching SOS in {countdown}s...
+            </p>
+          </>
+        ) : (
+          <div className="mt-8 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <div className="px-10 py-5 bg-red-500/10 border border-red-500/30 rounded-full">
+              <h3 className="text-red-500 font-black italic uppercase tracking-widest">
+                🚨 SOS Dispatched. Help is on the way.
+              </h3>
+            </div>
+            <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground/50 max-w-xs mx-auto">
+              Emergency contacts and local medical services at BMSIT Campus have been notified.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Manual button is hidden during overlay to prevent confusion */}
+    </div>
   );
-}
+};
