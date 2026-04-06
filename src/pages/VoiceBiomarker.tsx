@@ -254,7 +254,12 @@ export default function VoiceBiomarker() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
               {[
                 { label: "Confidence", value: `${(results.confidence * 100).toFixed(1)}%`, icon: Zap },
-                { label: "Stability", value: results.xaiLabel.split(' ')[1] || 'STABLE', icon: ShieldCheck },
+                { 
+                  label: "Stability", 
+                  value: results.jitter < 0.025 ? "HIGH" : (results.jitter < 0.045 ? "NORMAL" : "LOW"), 
+                  icon: ShieldCheck,
+                  color: results.jitter < 0.025 ? "text-green-400" : (results.jitter < 0.045 ? "text-yellow-400" : "text-red-400")
+                },
                 { label: "Engine", value: "Biometric-v2", icon: Layout },
                 { label: "Latency", value: results.latency || "1.2s", icon: HeartPulse }
               ].map((r, i) => (
@@ -263,18 +268,42 @@ export default function VoiceBiomarker() {
                     <r.icon className="w-3 h-3" />
                     <span className="text-[9px] uppercase font-black tracking-widest">{r.label}</span>
                   </div>
-                  <span className="text-lg font-black italic text-foreground tracking-tighter">{r.value}</span>
+                  <span className={cn(
+                    "text-lg font-black italic tracking-tighter",
+                    r.color || "text-foreground"
+                  )}>
+                    {r.value}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className={cn(
-              "w-full rounded-2xl p-6 text-center border-t border-b border-primary/20 bg-primary/5 mb-8",
-              results.xaiLabel.includes('LOW') ? "text-green-400" : (results.xaiLabel.includes('HIGH') ? "text-red-400" : "text-yellow-400")
-            )}>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-2">Vocal Risk Assessment</p>
-              <h4 className="text-3xl font-black italic uppercase tracking-tight">{results.xaiLabel}</h4>
-            </div>
+            {(() => {
+              const riskScore = results.riskScore || 0;
+              const jitter = results.jitter || 0;
+              const shimmer = results.shimmer || 0;
+              
+              let finalLabel = "🟢 LOW RISK";
+              let labelColor = "text-green-400";
+              
+              if (riskScore > 0.7) {
+                finalLabel = "🔴 HIGH RISK";
+                labelColor = "text-red-400";
+              } else if (jitter > 0.025 || shimmer > 0.15) {
+                finalLabel = "🟡 MODERATE RISK";
+                labelColor = "text-yellow-400";
+              }
+
+              return (
+                <div className={cn(
+                  "w-full rounded-2xl p-6 text-center border-t border-b border-primary/20 bg-primary/5 mb-8",
+                  labelColor
+                )}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-2">Vocal Risk Assessment</p>
+                  <h4 className="text-3xl font-black italic uppercase tracking-tight">{finalLabel}</h4>
+                </div>
+              );
+            })()}
 
             {results.shapContributions && results.shapContributions.length > 0 && (
               <div className="mb-8 w-full border border-white/5 bg-black/20 rounded-2xl p-6">

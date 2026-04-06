@@ -59,14 +59,18 @@ def analyze_vocal_risk(audio_path):
         shimmer = np.mean(np.abs(np.diff(voiced_rms))) / (np.mean(voiced_rms) + 1e-12)
         
         # 4. Decision Logic for Hypoglycemia Risk
-        # Values calibrated based on academic tremors research (jitter > 1.5% is typically pathological)
+        # Values calibrated based on academic tremors research
+        # NORMAL: 0% to 2.5% Jitter, 0% to 15.0% Shimmer
+        # MODERATE: 2.5% to 4.5% Jitter, 15.0% to 25.0% Shimmer
+        # HIGH RISK: Above 4.5% Jitter or Above 25.0% Shimmer
+        
         xaiLabel = '🟢 LOW RISK'
         confidence = 0.85 + (np.random.random() * 0.1) 
         
-        if jitter > 0.03:
+        if jitter > 0.045 or shimmer > 0.25:
             xaiLabel = '🔴 HIGH RISK'
             confidence = 0.94
-        elif jitter > 0.015 or shimmer > 0.04:
+        elif jitter > 0.025 or shimmer > 0.15:
             xaiLabel = '🟡 MODERATE RISK'
             confidence = 0.89
 

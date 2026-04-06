@@ -78,6 +78,7 @@ router.post('/vocal-risk', upload.single('audio'), async (req, res) => {
             shimmer: result.shimmer,
             latency: result.latency,
             timestamp: result.timestamp,
+            riskScore: inferenceResult.risk_score,
             classifier_used: inferenceResult.classifier_used,
             shapContributions: inferenceResult.shapContributions
         });
